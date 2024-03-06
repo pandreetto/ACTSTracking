@@ -313,4 +313,15 @@ EVENT::LCCollection* getCollection(EVENT::LCEvent* evt,
     return nullptr;
   }
 }
+
+Acts::ParticleHypothesis convertParticle(const EVENT::MCParticle* mcParticle)
+{
+  // TODO implement
+  Acts::PdgParticle pdg = Acts::PdgParticle::eInvalid;
+  float mass = 0.0f;
+  Acts::AnyCharge charge_type { 0.0f };
+  return Acts::ParticleHypothesis { pdg, mass, charge_type };
+}
+
+
 }  // namespace ACTSTracking

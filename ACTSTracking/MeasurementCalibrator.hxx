@@ -1,12 +1,16 @@
 #pragma once
 
 #include <Acts/EventData/Measurement.hpp>
+#include "Acts/EventData/SourceLink.hpp"
+#include "Acts/EventData/VectorMultiTrajectory.hpp"
+#include "Acts/Geometry/GeometryContext.hpp"
+#include "Acts/Utilities/CalibrationContext.hpp"
 
 #include "SourceLink.hxx"
 
 namespace ACTSTracking {
 //! Hit stored as an measurement
-using Measurement = Acts::BoundVariantMeasurement<ACTSTracking::SourceLink>;
+using Measurement = Acts::BoundVariantMeasurement;
 
 //! Collection of measurements
 using MeasurementContainer = std::vector<Measurement>;
@@ -33,6 +37,13 @@ class MeasurementCalibrator {
     assert((sourceLink.index() < m_measurements->size()) and
            "Source link index is outside the container bounds");
     return (*m_measurements)[sourceLink.index()];
+  }
+
+  void calibrate(const Acts::GeometryContext& gctx,
+                 const Acts::CalibrationContext& cctx,
+                 const Acts::SourceLink& sourceLink,
+                 Acts::VectorMultiTrajectory::TrackStateProxy trackState) const {
+    // TODO investigate!!
   }
 
  private:

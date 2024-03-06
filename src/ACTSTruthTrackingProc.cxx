@@ -7,6 +7,7 @@
 #include <IMPL/LCFlagImpl.h>
 #include <IMPL/LCRelationImpl.h>
 #include <IMPL/TrackImpl.h>
+#include <IMPL/TrackStateImpl.h>
 #include <IMPL/TrackerHitPlaneImpl.h>
 
 #include <UTIL/LCRelationNavigator.h>
@@ -14,6 +15,7 @@
 
 #include <Acts/EventData/MultiTrajectory.hpp>
 #include <Acts/Propagator/EigenStepper.hpp>
+#include <Acts/Propagator/Navigator.hpp>
 #include <Acts/Surfaces/PerigeeSurface.hpp>
 #include <Acts/TrackFitting/GainMatrixSmoother.hpp>
 #include <Acts/TrackFitting/GainMatrixUpdater.hpp>
@@ -25,8 +27,10 @@ using namespace Acts::UnitLiterals;
 #include "MeasurementCalibrator.hxx"
 #include "SourceLink.hxx"
 
-using TrackFitterResult =
-    Acts::Result<Acts::KalmanFitterResult<ACTSTracking::SourceLink>>;
+using TrackContainer =
+    Acts::TrackContainer<Acts::VectorTrackContainer,
+                         Acts::VectorMultiTrajectory, std::shared_ptr>;
+using TrackFitterResult = Acts::Result<TrackContainer::TrackProxy>;
 
 // sorting by value of R(=x^2+y^2) in global coordinated so the hits are always
 // sorted from close to the IP outward
@@ -96,7 +100,7 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
   using Stepper = Acts::EigenStepper<>;
   using Navigator = Acts::Navigator;
   using Propagator = Acts::Propagator<Stepper, Navigator>;
-  using Fitter = Acts::KalmanFitter<Propagator, Updater, Smoother>;
+  using Fitter = Acts::KalmanFitter<Propagator, Acts::VectorMultiTrajectory>;
 
   // Configurations
   Navigator::Config navigatorCfg{trackingGeometry()};
@@ -218,7 +222,7 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
 
     // Make container
     // MeasurementContainer track;
-    std::vector<ACTSTracking::SourceLink> trackSourceLinks;
+    std::vector<Acts::SourceLink> trackSourceLinks;
     ACTSTracking::MeasurementContainer track;
     for (EVENT::TrackerHit* hit : trackFilteredByRHits) {
       // Convert to Acts hit
@@ -234,7 +238,7 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
 
       Acts::Vector2 loc = lpResult.value();
 
-      Acts::SymMatrix2 cov = Acts::SymMatrix2::Zero();
+      Acts::SquareMatrix2 cov = Acts::SquareMatrix2::Zero();
       const EVENT::TrackerHitPlane* hitplane =
           dynamic_cast<const EVENT::TrackerHitPlane*>(hit);
       if (hitplane) {
@@ -244,8 +248,8 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
         throw std::runtime_error("Currently only support TrackerHitPlane.");
       }
 
-      ACTSTracking::SourceLink sourceLink(surface->geometryId(), track.size(),
-                                          hit);
+      ACTSTracking::SourceLink s_link(surface->geometryId(), track.size(), hit);
+      Acts::SourceLink sourceLink { std::move(s_link) };
       ACTSTracking::Measurement meas = Acts::makeMeasurement(
           sourceLink, loc, cov, Acts::eBoundLoc0, Acts::eBoundLoc1);
 
@@ -260,21 +264,29 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
         Acts::Surface::makeShared<Acts::PerigeeSurface>(
             Acts::Vector3{0., 0., 0.});
 
+    Updater kfUpdater;
+    Smoother kfSmoother;
+
+    Acts::KalmanFitterExtensions<Acts::VectorMultiTrajectory> extensions;
+    extensions.updater.connect<
+        &Acts::GainMatrixUpdater::operator()<Acts::VectorMultiTrajectory>>(
+        &kfUpdater);
+    extensions.smoother.connect<
+        &Acts::GainMatrixSmoother::operator()<Acts::VectorMultiTrajectory>>(
+        &kfSmoother);
+
     // Set the KalmanFitter options
     // std::unique_ptr<const Acts::Logger>
     // logger=Acts::getDefaultLogger("TrackFitting",
     // Acts::Logging::Level::VERBOSE);
-    Acts::KalmanFitterOptions<ACTSTracking::MeasurementCalibrator,
-                              Acts::VoidOutlierFinder>
-        kfOptions =
-            Acts::KalmanFitterOptions<ACTSTracking::MeasurementCalibrator,
-                                      Acts::VoidOutlierFinder>(
-                geometryContext(), magneticFieldContext(), calibrationContext(),
-                ACTSTracking::MeasurementCalibrator(track),
-                Acts::VoidOutlierFinder(),
-                // Acts::LoggerWrapper{*logger}, Acts::PropagatorPlainOptions(),
-                Acts::getDummyLogger(), Acts::PropagatorPlainOptions(),
-                &(*perigeeSurface));
+    Acts::KalmanFitterOptions<Acts::VectorMultiTrajectory> kfOptions {
+      geometryContext(),
+      magneticFieldContext(),
+      calibrationContext(),
+      extensions,
+      Acts::PropagatorPlainOptions(),
+      &(*perigeeSurface)
+    };
 
     double px = mcParticle->getMomentum()[0];
     double py = mcParticle->getMomentum()[1];
@@ -294,7 +306,7 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
     params[Acts::eBoundQOverP] = mcParticle->getCharge() / p;
 
     // build the track covariance matrix using the smearing sigmas
-    Acts::BoundSymMatrix cov = Acts::BoundSymMatrix::Zero();
+    Acts::BoundSquareMatrix cov = Acts::BoundSquareMatrix::Zero();
     cov(Acts::eBoundLoc0, Acts::eBoundLoc0) =
         std::pow(_initialTrackError_d0, 2);
     cov(Acts::eBoundLoc1, Acts::eBoundLoc1) =
@@ -311,16 +323,23 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
             Acts::Vector3(mcParticle->getVertex()));
 
     Acts::BoundTrackParameters initialparams(perigeeSurface, params,
-                                             mcParticle->getCharge(), cov);
+                                             cov, ACTSTracking::convertParticle(mcParticle));
+    // reference Examples TruthTracking/ParticleSmearing.cpp
     streamlog_out(DEBUG) << "Initial Paramemeters" << std::endl
                          << initialparams << std::endl;
 
-    TrackFitterResult result =
-        trackFitter.fit(trackSourceLinks, initialparams, kfOptions);
+    auto trackContainer = std::make_shared<Acts::VectorTrackContainer>();
+    auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
+    TrackContainer tracks(trackContainer, trackStateContainer);
+
+    TrackFitterResult result = trackFitter.fit(trackSourceLinks.begin(),
+                                               trackSourceLinks.end(),
+                                               initialparams, kfOptions,
+                                               tracks);
 
     if (result.ok()) {
-      const Acts::KalmanFitterResult<ACTSTracking::SourceLink>& fitOutput =
-          result.value();
+      const auto& fitOutput = result.value();
+/*
       if (fitOutput.fittedParameters) {
         // Make the track object and relations object
         IMPL::LCRelationImpl* relationTrack = new IMPL::LCRelationImpl;
@@ -362,6 +381,24 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
         relationTrack->setWeight(1.0);
         trackRelationCollection->addElement(relationTrack);
       } else {
+        streamlog_out(WARNING)
+            << "No fitted paramemeters for track" << std::endl;
+        _fitFails++;
+      }
+*/
+      if (fitOutput.hasReferenceSurface())
+      {
+        EVENT::Track* track = convert_track(fitOutput, magCache);
+        trackCollection->addElement(track);
+
+        IMPL::LCRelationImpl* relationTrack = new IMPL::LCRelationImpl;
+        relationTrack->setFrom(track);
+        relationTrack->setTo(mcParticle);
+        relationTrack->setWeight(1.0);
+        trackRelationCollection->addElement(relationTrack);
+      }
+      else
+      {
         streamlog_out(WARNING)
             << "No fitted paramemeters for track" << std::endl;
         _fitFails++;
@@ -428,3 +465,70 @@ void ACTSTruthTrackingProc::removeHitsSameLayer(
     }
   }
 }
+
+EVENT::Track* ACTSTruthTrackingProc::convert_track(
+    const TrackResult& fitter_res,
+    Acts::MagneticFieldProvider::Cache& magCache)
+{
+  IMPL::TrackImpl* track = new IMPL::TrackImpl;
+
+  track->setChi2(fitter_res.chi2());
+  track->setNdf(fitter_res.nDoF());
+
+  const Acts::Vector3 zeroPos(0, 0, 0);
+  Acts::Result<Acts::Vector3> fieldRes = magneticField()->getField(zeroPos, magCache);
+  if (!fieldRes.ok()) {
+    throw std::runtime_error("Field lookup error: " + fieldRes.error().value());
+  }
+  Acts::Vector3 field = *fieldRes;
+
+  const Acts::BoundVector& params = fitter_res.parameters();
+  const Acts::BoundMatrix& covariance = fitter_res.covariance();
+  EVENT::TrackState* trackStateAtIP = ACTSTracking::ACTS2Marlin_trackState(
+      EVENT::TrackState::AtIP, params, covariance, field[2] / Acts::UnitConstants::T);
+  track->trackStates().push_back(trackStateAtIP);
+
+  EVENT::TrackerHitVec hitsOnTrack;
+  EVENT::TrackStateVec statesOnTrack;
+
+  for (const auto& trk_state : fitter_res.trackStatesReversed())
+  {
+    if (!trk_state.hasUncalibratedSourceLink()) continue;
+
+    auto sl = trk_state.getUncalibratedSourceLink()
+                       .get<ACTSTracking::SourceLink>();
+    EVENT::TrackerHit* curr_hit = sl.lciohit();
+    hitsOnTrack.push_back(curr_hit);
+
+    const Acts::Vector3 hitPos(curr_hit->getPosition()[0],
+                               curr_hit->getPosition()[1],
+                               curr_hit->getPosition()[2]);
+
+    EVENT::TrackState* trackState = ACTSTracking::ACTS2Marlin_trackState(
+            EVENT::TrackState::AtOther, trk_state.smoothed(),
+            trk_state.smoothedCovariance(), hitPos[2] / Acts::UnitConstants::T);
+    statesOnTrack.push_back(trackState);
+  }
+
+  std::reverse(hitsOnTrack.begin(), hitsOnTrack.end());
+  std::reverse(statesOnTrack.begin(), statesOnTrack.end());
+
+  for (EVENT::TrackerHit* hit : hitsOnTrack) {
+    track->addHit(hit);
+  }
+
+  if (statesOnTrack.size() > 0) {
+    dynamic_cast<IMPL::TrackStateImpl*>(statesOnTrack.back())
+        ->setLocation(EVENT::TrackState::AtLastHit);
+    dynamic_cast<IMPL::TrackStateImpl*>(statesOnTrack.front())
+        ->setLocation(EVENT::TrackState::AtFirstHit);
+  }
+
+  EVENT::TrackStateVec& myTrackStates = track->trackStates();
+  myTrackStates.insert(myTrackStates.end(), statesOnTrack.begin(),
+                       statesOnTrack.end());
+
+  return track;
+}
+
+

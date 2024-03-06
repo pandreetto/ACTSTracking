@@ -1,10 +1,12 @@
 #pragma once
 
 #include <EVENT/LCEvent.h>
+#include <EVENT/MCParticle.h>
 #include <EVENT/Track.h>
 #include <EVENT/TrackState.h>
 
 #include <Acts/EventData/TrackParameters.hpp>
+#include "Acts/EventData/ParticleHypothesis.hpp"
 #include <Acts/MagneticField/MagneticFieldProvider.hpp>
 #include <Acts/TrackFinding/CombinatorialKalmanFilter.hpp>
 #include <Acts/TrackFitting/KalmanFitter.hpp>
@@ -93,4 +95,8 @@ EVENT::TrackState* ACTS2Marlin_trackState(int location,
  */
 EVENT::LCCollection* getCollection(EVENT::LCEvent* evt,
                                    const std::string& name);
+
+Acts::ParticleHypothesis convertParticle(const EVENT::MCParticle* mcParticle);
+
 }  // namespace ACTSTracking
+
