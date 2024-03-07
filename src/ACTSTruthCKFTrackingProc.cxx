@@ -33,12 +33,12 @@ using namespace Acts::UnitLiterals;
 using TrackFinderOptions =
     Acts::CombinatorialKalmanFilterOptions<ACTSTracking::SourceLinkAccessor::Iterator,
                                            Acts::VectorMultiTrajectory>;
-
+/*
 using TrackFinderResult = Acts::Result<
     Acts::CombinatorialKalmanFilterResult<ACTSTracking::SourceLink>>;
 
 using TrackFinderResultContainer = std::vector<TrackFinderResult>;
-
+*/
 ACTSTruthCKFTrackingProc aACTSTruthCKFTrackingProc;
 
 ACTSTruthCKFTrackingProc::ACTSTruthCKFTrackingProc()
@@ -310,7 +310,21 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   TrackContainer tracks(trackContainer, trackStateContainer);
 
   for (std::size_t iseed = 0; iseed < seeds.size(); ++iseed) {
-    auto results = trackFinder.findTracks(seeds.at(iseed), ckfOptions, tracks);
+    auto result = trackFinder.findTracks(seeds.at(iseed), ckfOptions, tracks);
+    if (result.ok()) {
+      const auto& fitOutput = result.value();
+      for (const auto& trackTip : fitOutput)
+      {
+        std::cout << trackTip.chi2() << std::endl;
+        EVENT::Track* track = ACTSTracking::ACTS2Marlin_track(
+            trackTip, magneticField(), magCache);
+        trackCollection->addElement(track);
+      }
+    } else {
+      streamlog_out(WARNING) << "Track fit error: " << result.error() << std::endl;
+      _fitFails++;
+    }
+
   }
 /*
   auto t1 = std::chrono::high_resolution_clock::now();

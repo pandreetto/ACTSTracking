@@ -11,16 +11,6 @@
 
 #include "ACTSProcBase.hxx"
 
-#include <Acts/MagneticField/MagneticFieldProvider.hpp>
-#include "Acts/EventData/TrackContainer.hpp"
-#include "Acts/EventData/VectorTrackContainer.hpp"
-#include "Acts/EventData/VectorMultiTrajectory.hpp"
-
-using TrackResult =
-    Acts::TrackContainer<Acts::VectorTrackContainer,
-                         Acts::VectorMultiTrajectory,
-                         std::shared_ptr>::TrackProxy;
-
 /**
  * This code performs a true pattern recognition by looping over all MC
  * particles and adding all hits associated to them onto a prototrack. This is
@@ -59,10 +49,6 @@ class ACTSTruthTrackingProc : public ACTSProcBase {
   /** Call to get collections
    */
   LCCollection* getCollection(const std::string&, LCEvent*);
-
-  EVENT::Track* convert_track(
-    const TrackResult& fitter_res,
-    Acts::MagneticFieldProvider::Cache& magCache);
 
  protected:
   // Encoder

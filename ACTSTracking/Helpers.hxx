@@ -10,10 +10,16 @@
 #include <Acts/MagneticField/MagneticFieldProvider.hpp>
 #include <Acts/TrackFinding/CombinatorialKalmanFilter.hpp>
 #include <Acts/TrackFitting/KalmanFitter.hpp>
+#include <Acts/EventData/VectorTrackContainer.hpp>
+#include <Acts/EventData/VectorMultiTrajectory.hpp>
 
 #include "SourceLink.hxx"
 
 namespace ACTSTracking {
+
+using TrackResult = Acts::TrackContainer<Acts::VectorTrackContainer,
+                                         Acts::VectorMultiTrajectory,
+                                         std::shared_ptr>::TrackProxy;
 
 //! Get path to a resource file
 /**
@@ -45,13 +51,14 @@ std::string findFile(const std::string& inpath);
  *
  * \return Track with equivalent parameters of the ACTS track
  */
+/*
 EVENT::Track* ACTS2Marlin_track(
     const Acts::CombinatorialKalmanFilterResult<ACTSTracking::SourceLink>&
         fitOutput,
     std::size_t trackTip,
     std::shared_ptr<Acts::MagneticFieldProvider> magneticField,
     Acts::MagneticFieldProvider::Cache& magCache);
-
+*/
 //! Convert ACTS KF result to LCIO track class
 /**
  * Converted propertie are:
@@ -65,8 +72,14 @@ EVENT::Track* ACTS2Marlin_track(
  *
  * \return Track with equivalent parameters of the ACTS track
  */
+/*
 EVENT::Track* ACTS2Marlin_track(
     const Acts::KalmanFitterResult<ACTSTracking::SourceLink>& fitOutput,
+    std::shared_ptr<Acts::MagneticFieldProvider> magneticField,
+    Acts::MagneticFieldProvider::Cache& magCache);
+*/
+EVENT::Track* ACTS2Marlin_track(
+    const TrackResult& fitter_res,
     std::shared_ptr<Acts::MagneticFieldProvider> magneticField,
     Acts::MagneticFieldProvider::Cache& magCache);
 
