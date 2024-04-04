@@ -16,10 +16,10 @@
 #include <Acts/Propagator/EigenStepper.hpp>
 #include <Acts/Propagator/Navigator.hpp>
 #include <Acts/Propagator/Propagator.hpp>
-#include <Acts/Seeding/BinFinder.hpp>
-#include <Acts/Seeding/BinnedSPGroup.hpp>
+// #include <Acts/Seeding/BinFinder.hpp>
+// #include <Acts/Seeding/BinnedSPGroup.hpp>
 #include <Acts/Seeding/EstimateTrackParamsFromSeed.hpp>
-#include <Acts/Seeding/Seedfinder.hpp>
+#include <Acts/Seeding/SeedFinder.hpp>
 #include <Acts/Seeding/SpacePointGrid.hpp>
 #include <Acts/Surfaces/PerigeeSurface.hpp>
 #include <Acts/TrackFinding/CombinatorialKalmanFilter.hpp>
@@ -36,14 +36,9 @@ using namespace Acts::UnitLiterals;
 
 // Track fitting definitions
 using TrackFinderOptions =
-    Acts::CombinatorialKalmanFilterOptions<ACTSTracking::SourceLinkAccessor,
-                                           ACTSTracking::MeasurementCalibrator,
-                                           Acts::MeasurementSelector>;
-
-using TrackFinderResult = Acts::Result<
-    Acts::CombinatorialKalmanFilterResult<ACTSTracking::SourceLink>>;
-
-using TrackFinderResultContainer = std::vector<TrackFinderResult>;
+    Acts::CombinatorialKalmanFilterOptions<ACTSTracking::SourceLinkAccessor::Iterator,
+                                        Acts::VectorMultiTrajectory>;
+using SSPoint = ACTSTracking::SeedSpacePoint;
 
 ACTSSeededCKFTrackingProc aACTSSeededCKFTrackingProc;
 
@@ -250,7 +245,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
     Acts::Vector2 loc = lpResult.value();
 
-    Acts::SymMatrix2 localCov = Acts::SymMatrix2::Zero();
+    Acts::SquareMatrix2 localCov = Acts::SquareMatrix2::Zero();
     const EVENT::TrackerHitPlane *hitplane =
         dynamic_cast<const EVENT::TrackerHitPlane *>(hit.second);
     if (hitplane) {
@@ -262,8 +257,9 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
     ACTSTracking::SourceLink sourceLink(surface->geometryId(),
                                         measurements.size(), hit.second);
-    ACTSTracking::Measurement meas = Acts::makeMeasurement(
-        sourceLink, loc, localCov, Acts::eBoundLoc0, Acts::eBoundLoc1);
+    Acts::SourceLink src_wrap { sourceLink };
+    Acts::Measurement meas = Acts::makeMeasurement(
+        src_wrap, loc, localCov, Acts::eBoundLoc0, Acts::eBoundLoc1);
 
     measurements.push_back(meas);
     sourceLinks.emplace_hint(sourceLinks.end(), sourceLink);
@@ -325,7 +321,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   using Stepper = Acts::EigenStepper<>;
   using Navigator = Acts::Navigator;
   using Propagator = Acts::Propagator<Stepper, Navigator>;
-  using CKF = Acts::CombinatorialKalmanFilter<Propagator, Updater, Smoother>;
+  using CKF = Acts::CombinatorialKalmanFilter<Propagator, Acts::VectorMultiTrajectory>;
 
   // Configurations
   Navigator::Config navigatorCfg{trackingGeometry()};
@@ -342,12 +338,12 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   // Set the options
   Acts::MeasurementSelector::Config measurementSelectorCfg = {
       {Acts::GeometryIdentifier(),
-       {_CKF_chi2CutOff, (std::size_t)(_CKF_numMeasurementsCutOff)}}};
+       { {}, { _CKF_chi2CutOff }, { (std::size_t)(_CKF_numMeasurementsCutOff) }}}};
 
   Acts::PropagatorPlainOptions pOptions;
   pOptions.maxSteps = 10000;
   if (_propagateBackward) {
-    pOptions.direction = Acts::backward;
+    pOptions.direction = Acts::Direction::Backward;
   }
 
   // Construct a perigee surface as the target surface
@@ -355,23 +351,46 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
       Acts::Surface::makeShared<Acts::PerigeeSurface>(
           Acts::Vector3{0., 0., 0.});
 
+  Acts::GainMatrixUpdater kfUpdater;
+  Acts::GainMatrixSmoother kfSmoother;
+
+  Acts::MeasurementSelector measSel { measurementSelectorCfg };
+  ACTSTracking::MeasurementCalibrator measCal { measurements };
+  Acts::CombinatorialKalmanFilterExtensions<Acts::VectorMultiTrajectory>
+      extensions;
+  extensions.calibrator.connect<
+      &ACTSTracking::MeasurementCalibrator::calibrate>(
+      &measCal);
+  extensions.updater.connect<
+      &Acts::GainMatrixUpdater::operator()<Acts::VectorMultiTrajectory>>(
+      &kfUpdater);
+  extensions.smoother.connect<
+      &Acts::GainMatrixSmoother::operator()<Acts::VectorMultiTrajectory>>(
+      &kfSmoother);
+  extensions.measurementSelector
+      .connect<&Acts::MeasurementSelector::select<Acts::VectorMultiTrajectory>>(
+          &measSel);
+
+  using ACTSTracking::SourceLinkAccessor;
+  SourceLinkAccessor slAccessor;
+  slAccessor.container = &sourceLinks;
+  Acts::SourceLinkAccessorDelegate<SourceLinkAccessor::Iterator> slAccessorDelegate;
+  slAccessorDelegate.connect<&SourceLinkAccessor::range>(&slAccessor);
+
   // std::unique_ptr<const Acts::Logger>
   // logger=Acts::getDefaultLogger("TrackFitting",
   // Acts::Logging::Level::VERBOSE);
 
   TrackFinderOptions ckfOptions = TrackFinderOptions(
       geometryContext(), magneticFieldContext(), calibrationContext(),
-      ACTSTracking::SourceLinkAccessor(),
-      ACTSTracking::MeasurementCalibrator(std::move(measurements)),
-      Acts::MeasurementSelector(measurementSelectorCfg),
-      // Acts::LoggerWrapper{*logger}, pOptions,
-      Acts::getDummyLogger(), pOptions, &(*perigeeSurface));
+      slAccessorDelegate,
+      extensions, pOptions, perigeeSurface.get());
 
   //
   // Finder configuration
   static const Acts::Vector3 zeropos(0, 0, 0);
 
-  Acts::SeedfinderConfig<ACTSTracking::SeedSpacePoint> finderCfg;
+  Acts::SeedFinderConfig<ACTSTracking::SeedSpacePoint> finderCfg;
   finderCfg.rMax = _seedFinding_rMax;
   finderCfg.deltaRMin = _seedFinding_deltaRMin;
   finderCfg.deltaRMax = _seedFinding_deltaRMax;
@@ -384,18 +403,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   finderCfg.sigmaScattering = _seedFinding_sigmaScattering;
   finderCfg.radLengthPerSeed = _seedFinding_radLengthPerSeed;
   finderCfg.minPt = _seedFinding_minPt * Acts::UnitConstants::MeV;
-  finderCfg.bFieldInZ = (*magneticField()->getField(zeropos, magCache))[2];
-  finderCfg.beamPos = {0, 0};
   finderCfg.impactMax = _seedFinding_impactMax * Acts::UnitConstants::mm;
-
-  Acts::SpacePointGridConfig gridCfg;
-  gridCfg.bFieldInZ = finderCfg.bFieldInZ;
-  gridCfg.cotThetaMax = finderCfg.cotThetaMax;
-  gridCfg.deltaRMax = finderCfg.deltaRMax;
-  gridCfg.minPt = finderCfg.minPt;
-  gridCfg.rMax = finderCfg.rMax;
-  gridCfg.zMax = finderCfg.zMax;
-  gridCfg.zMin = finderCfg.zMin;
 
   Acts::SeedFilterConfig filterCfg;
   filterCfg.maxSeedsPerSpM = finderCfg.maxSeedsPerSpM;
@@ -403,16 +411,32 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   finderCfg.seedFilter =
       std::make_unique<Acts::SeedFilter<ACTSTracking::SeedSpacePoint>>(
           Acts::SeedFilter<ACTSTracking::SeedSpacePoint>(filterCfg));
+  finderCfg.toInternalUnits();
+
+  Acts::SeedFinderOptions finderOpts;
+  finderOpts.bFieldInZ = (*magneticField()->getField(zeropos, magCache))[2];   // TODO investigate
+  finderOpts.beamPos = {0, 0};
+  finderOpts.toInternalUnits();
+
+  Acts::CylindricalSpacePointGridConfig gridCfg;
+  gridCfg.cotThetaMax = finderCfg.cotThetaMax;
+  gridCfg.deltaRMax = finderCfg.deltaRMax;
+  gridCfg.minPt = finderCfg.minPt;
+  gridCfg.rMax = finderCfg.rMax;
+  gridCfg.zMax = finderCfg.zMax;
+  gridCfg.zMin = finderCfg.zMin;
+  gridCfg.toInternalUnits();
+
+  Acts::CylindricalSpacePointGridOptions gridOpts;
+  gridOpts.bFieldInZ = (*magneticField()->getField(zeropos, magCache))[2];
+  gridOpts.toInternalUnits();
 
   // Create tools
-  std::function<std::pair<Acts::Vector3, Acts::Vector2>(
-      const ACTSTracking::SeedSpacePoint &, float, float, float)>
-      extractGlobalQuantities =
-          [](const ACTSTracking::SeedSpacePoint &sp, float, float,
-             float) -> std::pair<Acts::Vector3, Acts::Vector2> {
-    Acts::Vector3 position{sp.x(), sp.y(), sp.z()};
-    Acts::Vector2 covariance{sp.varianceR(), sp.varianceZ()};
-    return std::make_pair(position, covariance);
+  auto extractGlobalQuantities = [](const SSPoint& sp, float, float,
+                                     float) {
+    Acts::Vector3 position { sp.x(), sp.y(), sp.z() };
+    Acts::Vector2 covariance { sp.varianceR(), sp.varianceZ() };
+    return std::make_tuple(position, covariance, sp.t());
   };
 
   std::vector<const ACTSTracking::SeedSpacePoint *> spacePointPtrs(
@@ -420,48 +444,58 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   std::transform(spacePoints.begin(), spacePoints.end(), spacePointPtrs.begin(),
                  [](const ACTSTracking::SeedSpacePoint &sp) { return &sp; });
 
-  std::shared_ptr<Acts::BinFinder<ACTSTracking::SeedSpacePoint>>
-      bottomBinFinder =
-          std::make_shared<Acts::BinFinder<ACTSTracking::SeedSpacePoint>>();
-  std::shared_ptr<Acts::BinFinder<ACTSTracking::SeedSpacePoint>> topBinFinder =
-      std::make_shared<Acts::BinFinder<ACTSTracking::SeedSpacePoint>>();
+  Acts::Extent rRangeSPExtent;
 
-  std::unique_ptr<Acts::SpacePointGrid<ACTSTracking::SeedSpacePoint>> grid =
-      Acts::SpacePointGridCreator::createGrid<ACTSTracking::SeedSpacePoint>(
-          gridCfg);
-
-  Acts::BinnedSPGroup<ACTSTracking::SeedSpacePoint> spacePointsGrouping(
+  Acts::CylindricalSpacePointGrid<SSPoint> grid =
+      Acts::CylindricalSpacePointGridCreator::createGrid<SSPoint>(
+          gridCfg, gridOpts);
+  Acts::CylindricalSpacePointGridCreator::fillGrid(finderCfg, finderOpts, grid,
       spacePointPtrs.begin(), spacePointPtrs.end(), extractGlobalQuantities,
-      bottomBinFinder, topBinFinder, std::move(grid), finderCfg);
+      rRangeSPExtent);
 
-  Acts::Seedfinder<ACTSTracking::SeedSpacePoint> finder(finderCfg);
-  decltype(finder)::State state;
-  std::vector<Acts::Seed<ACTSTracking::SeedSpacePoint>> seeds;
+  const Acts::GridBinFinder<2ul> bottomBinFinder(1, 1);       // TODO missing params
+  const Acts::GridBinFinder<2ul> topBinFinder(1, 1);          // TODO move into init
+
+  std::array<std::vector<std::size_t>, 2ul> navigation;       // TODO investigate
+  navigation[1ul] = finderCfg.zBinsCustomLooping;
+
+  auto spacePointsGrouping = Acts::CylindricalBinnedGroup<SSPoint>(
+      std::move(grid), bottomBinFinder, topBinFinder,
+      std::move(navigation));
+
+  Acts::SeedFinder<SSPoint> finder(finderCfg);
+  decltype(finder)::SeedingState state;
+  std::vector<Acts::Seed<SSPoint>> seeds;
+
+  state.spacePointData.resize(spacePointPtrs.size(),
+      finderCfg.useDetailedDoubleMeasurementInfo);
+
+  float up = Acts::clampValue<float>(
+      std::floor(rRangeSPExtent.max(Acts::binR) / 2) * 2);
+  const Acts::Range1D<float> rMiddleSPRange(
+      std::floor(rRangeSPExtent.min(Acts::binR) / 2) * 2 +
+          finderCfg.deltaRMiddleMinSPRange,
+      up - finderCfg.deltaRMiddleMaxSPRange);                  // TODO investigate
+
+  // TODO missing check for finderCfg.useDetailedDoubleMeasurementInfo
+
   std::vector<Acts::BoundTrackParameters> paramseeds;
 
-  Acts::BinnedSPGroupIterator<ACTSTracking::SeedSpacePoint> group =
-      spacePointsGrouping.begin();
-  Acts::BinnedSPGroupIterator<ACTSTracking::SeedSpacePoint> groupEnd =
-      spacePointsGrouping.end();
-  for (; !(group == groupEnd); ++group) {
-    //
-    // Run seeding
+  for (const auto [bottom, middle, top] : spacePointsGrouping)
+  {
     seeds.clear();
 
-    finder.createSeedsForGroup(state, std::back_inserter(seeds), group.bottom(),
-                               group.middle(), group.top());
+    finder.createSeedsForGroup(
+        finderOpts, state, spacePointsGrouping.grid(),
+        std::back_inserter(seeds), bottom, middle, top, rMiddleSPRange);
 
-    //
-    // Loop over seeds and get track parameters
-    paramseeds.clear();
-    for (const Acts::Seed<ACTSTracking::SeedSpacePoint> &seed : seeds) {
-      // Get the bottom space point and its reference surface
-      // @todo do we need to sort the sps first
-      const ACTSTracking::SeedSpacePoint *bottomSP = seed.sp().front();
-      const ACTSTracking::SourceLink &sourceLink = bottomSP->sourceLink();
-      const Acts::GeometryIdentifier &geoId = sourceLink.geometryId();
+    for (const Acts::Seed<SSPoint> &seed : seeds)
+    {
+      const SSPoint* bottomSP = seed.sp().front();
 
-      const Acts::Surface *surface = trackingGeometry()->findSurface(geoId);
+      const auto& sourceLink = bottomSP->sourceLink();
+      const Acts::GeometryIdentifier& geoId = sourceLink.geometryId();
+      const Acts::Surface* surface = trackingGeometry()->findSurface(geoId);
       if (surface == nullptr) {
         std::cout << "surface with geoID " << geoId
                   << " is not found in the tracking gemetry";
@@ -493,7 +527,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
       float p = std::abs(1 / params[Acts::eBoundQOverP]);
 
       // build the track covariance matrix using the smearing sigmas
-      Acts::BoundSymMatrix cov = Acts::BoundSymMatrix::Zero();
+      Acts::BoundSquareMatrix cov = Acts::BoundSquareMatrix::Zero();
       cov(Acts::eBoundLoc0, Acts::eBoundLoc0) =
           std::pow(_initialTrackError_pos, 2);
       cov(Acts::eBoundLoc1, Acts::eBoundLoc1) =
@@ -508,7 +542,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
           std::pow(_initialTrackError_relP * p / (p * p), 2);
 
       Acts::BoundTrackParameters paramseed(surface->getSharedPtr(), params,
-                                           charge, cov);
+                                           cov, Acts::ParticleHypothesis::muon());  // TODO change hypothesis
       paramseeds.push_back(paramseed);
 
       //
@@ -549,49 +583,43 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
     //
     // Find the tracks
-    TrackFinderResultContainer results;
-    if (_runCKF)
-      results = trackFinder.findTracks(sourceLinks, paramseeds, ckfOptions);
+    if (_runCKF) continue;
 
-    for (TrackFinderResult &result : results) {
+    using TrackContainer = Acts::TrackContainer<Acts::VectorTrackContainer,
+                                                Acts::VectorMultiTrajectory,
+                                                std::shared_ptr>;
+    auto trackContainer = std::make_shared<Acts::VectorTrackContainer>();
+    auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
+    TrackContainer tracks(trackContainer, trackStateContainer);
+
+    for (std::size_t iseed = 0; iseed < paramseeds.size(); ++iseed) {
+
+      tracks.clear();
+
+      auto result = trackFinder.findTracks(paramseeds.at(iseed), ckfOptions, tracks);
       if (result.ok()) {
-        const Acts::CombinatorialKalmanFilterResult<ACTSTracking::SourceLink>
-            &fitOutput = result.value();
-        for (const size_t &trackTip : fitOutput.lastMeasurementIndices) {
-          if (fitOutput.fittedParameters.count(trackTip) == 0) {
-            streamlog_out(WARNING) << "No fitted track parameters for "
-                                      "trajectory with entry index = "
-                                   << trackTip << std::endl;
-            continue;
-          }
-
+        const auto& fitOutput = result.value();
+        for (const TrackContainer::TrackProxy& trackTip : fitOutput)
+        {
           //
           // Helpful debug output
-          Acts::MultiTrajectoryHelpers::TrajectoryState trajState =
-              Acts::MultiTrajectoryHelpers::trajectoryState(
-                  fitOutput.fittedStates, trackTip);
           streamlog_out(DEBUG) << "Trajectory Summary" << std::endl;
           streamlog_out(DEBUG)
-              << "\tchi2Sum       " << trajState.chi2Sum << std::endl;
+              << "\tchi2Sum       " << trackTip.chi2() << std::endl;
           streamlog_out(DEBUG)
-              << "\tNDF           " << trajState.NDF << std::endl;
+              << "\tNDF           " << trackTip.nDoF() << std::endl;
           streamlog_out(DEBUG)
-              << "\tnHoles        " << trajState.nHoles << std::endl;
+              << "\tnHoles        " << trackTip.nHoles() << std::endl;
           streamlog_out(DEBUG)
-              << "\tnMeasurements " << trajState.nMeasurements << std::endl;
+              << "\tnMeasurements " << trackTip.nMeasurements() << std::endl;
           streamlog_out(DEBUG)
-              << "\tnOutliers     " << trajState.nOutliers << std::endl;
+              << "\tnOutliers     " << trackTip.nOutliers() << std::endl;
           streamlog_out(DEBUG)
-              << "\tnStates       " << trajState.nStates << std::endl;
-
-          const Acts::BoundTrackParameters &params =
-              fitOutput.fittedParameters.at(trackTip);
-          streamlog_out(DEBUG) << "Fitted Paramemeters" << std::endl
-                               << params << std::endl;
+              << "\tnStates       " << trackTip.nTrackStates() << std::endl;
 
           // Make track object
           EVENT::Track *track = ACTSTracking::ACTS2Marlin_track(
-              fitOutput, trackTip, magneticField(), magCache);
+              trackTip, magneticField(), magCache);
 
           // Save results
           trackCollection->addElement(track);
