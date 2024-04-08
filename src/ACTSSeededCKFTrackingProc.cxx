@@ -489,6 +489,9 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
         finderOpts, state, spacePointsGrouping.grid(),
         std::back_inserter(seeds), bottom, middle, top, rMiddleSPRange);
 
+    //
+    // Loop over seeds and get track parameters
+    paramseeds.clear();
     for (const Acts::Seed<SSPoint> &seed : seeds)
     {
       const SSPoint* bottomSP = seed.sp().front();
@@ -542,7 +545,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
           std::pow(_initialTrackError_relP * p / (p * p), 2);
 
       Acts::BoundTrackParameters paramseed(surface->getSharedPtr(), params,
-                                           cov, Acts::ParticleHypothesis::muon());  // TODO change hypothesis
+                                           cov, Acts::ParticleHypothesis::pion());
       paramseeds.push_back(paramseed);
 
       //
