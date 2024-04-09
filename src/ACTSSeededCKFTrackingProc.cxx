@@ -456,12 +456,8 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   const Acts::GridBinFinder<2ul> bottomBinFinder(1, 1);       // TODO missing params
   const Acts::GridBinFinder<2ul> topBinFinder(1, 1);          // TODO move into init
 
-  std::array<std::vector<std::size_t>, 2ul> navigation;       // TODO investigate
-  navigation[1ul] = finderCfg.zBinsCustomLooping;
-
   auto spacePointsGrouping = Acts::CylindricalBinnedGroup<SSPoint>(
-      std::move(grid), bottomBinFinder, topBinFinder,
-      std::move(navigation));
+      std::move(grid), bottomBinFinder, topBinFinder);
 
   Acts::SeedFinder<SSPoint> finder(finderCfg);
   decltype(finder)::SeedingState state;
