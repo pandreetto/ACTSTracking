@@ -233,6 +233,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
        sortedHits) {
     // Convert to Acts hit
     const Acts::Surface *surface = trackingGeometry()->findSurface(hit.first);
+    if (surface == nullptr) throw std::runtime_error("Surface not found");
 
     const double *lcioglobalpos = hit.second->getPosition();
     Acts::Vector3 globalPos = {lcioglobalpos[0], lcioglobalpos[1],
@@ -394,6 +395,10 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   finderCfg.rMax = _seedFinding_rMax;
   finderCfg.deltaRMin = _seedFinding_deltaRMin;
   finderCfg.deltaRMax = _seedFinding_deltaRMax;
+  finderCfg.deltaRMinTopSP = _seedFinding_deltaRMin;
+  finderCfg.deltaRMaxTopSP = _seedFinding_deltaRMax;
+  finderCfg.deltaRMinBottomSP = _seedFinding_deltaRMin;            // TODO missing config params
+  finderCfg.deltaRMaxBottomSP = _seedFinding_deltaRMax;
   finderCfg.collisionRegionMin = -_seedFinding_collisionRegion;
   finderCfg.collisionRegionMax = _seedFinding_collisionRegion;
   finderCfg.zMin = -_seedFinding_zMax;
@@ -410,13 +415,14 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
   finderCfg.seedFilter =
       std::make_unique<Acts::SeedFilter<ACTSTracking::SeedSpacePoint>>(
-          Acts::SeedFilter<ACTSTracking::SeedSpacePoint>(filterCfg));
-  finderCfg.toInternalUnits();
+          Acts::SeedFilter<ACTSTracking::SeedSpacePoint>(filterCfg.toInternalUnits()));
+  finderCfg = finderCfg.toInternalUnits().calculateDerivedQuantities();
 
   Acts::SeedFinderOptions finderOpts;
   finderOpts.bFieldInZ = (*magneticField()->getField(zeropos, magCache))[2];   // TODO investigate
   finderOpts.beamPos = {0, 0};
-  finderOpts.toInternalUnits();
+  finderOpts = finderOpts.toInternalUnits();
+  finderOpts = finderOpts.calculateDerivedQuantities(finderCfg);
 
   Acts::CylindricalSpacePointGridConfig gridCfg;
   gridCfg.cotThetaMax = finderCfg.cotThetaMax;
@@ -425,11 +431,9 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   gridCfg.rMax = finderCfg.rMax;
   gridCfg.zMax = finderCfg.zMax;
   gridCfg.zMin = finderCfg.zMin;
-  gridCfg.toInternalUnits();
 
   Acts::CylindricalSpacePointGridOptions gridOpts;
   gridOpts.bFieldInZ = (*magneticField()->getField(zeropos, magCache))[2];
-  gridOpts.toInternalUnits();
 
   // Create tools
   auto extractGlobalQuantities = [](const SSPoint& sp, float, float,
@@ -448,7 +452,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
   Acts::CylindricalSpacePointGrid<SSPoint> grid =
       Acts::CylindricalSpacePointGridCreator::createGrid<SSPoint>(
-          gridCfg, gridOpts);
+          gridCfg.toInternalUnits(), gridOpts.toInternalUnits());
   Acts::CylindricalSpacePointGridCreator::fillGrid(finderCfg, finderOpts, grid,
       spacePointPtrs.begin(), spacePointPtrs.end(), extractGlobalQuantities,
       rRangeSPExtent);
