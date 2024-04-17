@@ -409,6 +409,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   finderCfg.radLengthPerSeed = _seedFinding_radLengthPerSeed;
   finderCfg.minPt = _seedFinding_minPt * Acts::UnitConstants::MeV;
   finderCfg.impactMax = _seedFinding_impactMax * Acts::UnitConstants::mm;
+  finderCfg.useVariableMiddleSPRange = true;
 
   Acts::SeedFilterConfig filterCfg;
   filterCfg.maxSeedsPerSpM = finderCfg.maxSeedsPerSpM;
@@ -431,6 +432,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   gridCfg.rMax = finderCfg.rMax;
   gridCfg.zMax = finderCfg.zMax;
   gridCfg.zMin = finderCfg.zMin;
+  gridCfg.impactMax = finderCfg.impactMax;
 
   Acts::CylindricalSpacePointGridOptions gridOpts;
   gridOpts.bFieldInZ = (*magneticField()->getField(zeropos, magCache))[2];
