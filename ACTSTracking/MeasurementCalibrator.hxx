@@ -21,7 +21,7 @@ class MeasurementCalibrator {
   MeasurementCalibrator() = default;
   /// Construct using a user-provided container to chose measurements from.
   MeasurementCalibrator(const MeasurementContainer& measurements)
-      : m_measurements(&measurements) {}
+      : m_measurements(measurements) {}
 
   //! Find the measurement corresponding to the source link.
   /**
@@ -32,23 +32,28 @@ class MeasurementCalibrator {
   template <typename parameters_t>
   const Measurement& operator()(const SourceLink& sourceLink,
                                 const parameters_t& /* parameters */) const {
-    assert(m_measurements and
-           "Undefined measurement container in DigitizedCalibrator");
     assert((sourceLink.index() < m_measurements->size()) and
            "Source link index is outside the container bounds");
-    return (*m_measurements)[sourceLink.index()];
+    return m_measurements[sourceLink.index()];
   }
 
   void calibrate(const Acts::GeometryContext& gctx,
                  const Acts::CalibrationContext& cctx,
                  const Acts::SourceLink& sourceLink,
                  Acts::VectorMultiTrajectory::TrackStateProxy trackState) const {
-    // TODO investigate!!
+    trackState.setUncalibratedSourceLink(sourceLink);
+    const auto& idxSourceLink = sourceLink.get<ACTSTracking::SourceLink>();
+
+    assert((idxSourceLink.index() < m_measurements.size()) and
+           "Source link index is outside the container bounds");
+
+    const auto& meas = std::get<1>(m_measurements[idxSourceLink.index()]);  //TODO workaround
+    trackState.allocateCalibrated(meas.size());
+    trackState.setCalibrated(meas);
   }
 
  private:
-  // use pointer so the calibrator is copyable and default constructible.
-  const MeasurementContainer* m_measurements = nullptr;
+  const MeasurementContainer& m_measurements;
 };
 
 }  // namespace ACTSTracking
