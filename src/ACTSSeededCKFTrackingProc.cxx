@@ -588,7 +588,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
     //
     // Find the tracks
-    if (_runCKF) continue;
+    if (!_runCKF) continue;
 
     using TrackContainer = Acts::TrackContainer<Acts::VectorTrackContainer,
                                                 Acts::VectorMultiTrajectory,
