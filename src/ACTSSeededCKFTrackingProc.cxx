@@ -91,6 +91,42 @@ ACTSSeededCKFTrackingProc::ACTSSeededCKFTrackingProc()
                              "Maximum dR between hits in a seed.",
                              _seedFinding_deltaRMax, _seedFinding_deltaRMax);
 
+  registerProcessorParameter("SeedFinding_DeltaRMinTop",
+                             "Minimum dR between the reference hit and outer ones in a seed.",
+                             _seedFinding_deltaRMinTop, 0.f);
+
+  registerProcessorParameter("SeedFinding_DeltaRMaxTop",
+                             "Maximum dR between the reference hit and outer ones in a seed.",
+                             _seedFinding_deltaRMaxTop, 0.f);
+
+  registerProcessorParameter("SeedFinding_DeltaRMinBottom",
+                             "Minimum dR between the reference hit and inner ones in a seed.",
+                             _seedFinding_deltaRMinBottom, 0.f);
+
+  registerProcessorParameter("SeedFinding_DeltaRMaxBottom",
+                             "Maximum dR between the reference hit and inner ones in a seed.",
+                             _seedFinding_deltaRMaxBottom, 0.f);
+
+  registerProcessorParameter("SeedFinding_zTopBinLen",
+                             "Number of top bins along Z for seeding",
+                             _zTopBinLen, 1);
+
+  registerProcessorParameter("SeedFinding_zBottomBinLen",
+                             "Number of bottom bins along Z for seeding",
+                             _zBottomBinLen, 1);
+
+  registerProcessorParameter("SeedFinding_phiTopBinLen",
+                             "Number of top bins along phi for seeding",
+                             _phiTopBinLen, 1);
+
+  registerProcessorParameter("SeedFinding_phiBottomBinLen",
+                             "Number of bottom bins along phi for seeding",
+                             _phiBottomBinLen, 1);
+
+  registerProcessorParameter("SeedFinding_zBinEdges",
+                             "Bins placement along Z for seeding.",
+                             _seedFinding_zBinEdges, StringVec(0));
+
   registerProcessorParameter(
       "SeedFinding_CollisionRegion",
       "Size of the collision region in one direction (assumed symmetric).",
@@ -175,6 +211,11 @@ void ACTSSeededCKFTrackingProc::init() {
   }
 
   _seedGeometrySelection = ACTSTracking::GeometryIdSelector(geoSelection);
+
+  if (_seedFinding_deltaRMinTop == 0.f) _seedFinding_deltaRMinTop = _seedFinding_deltaRMin;
+  if (_seedFinding_deltaRMaxTop == 0.f) _seedFinding_deltaRMaxTop = _seedFinding_deltaRMax;
+  if (_seedFinding_deltaRMinBottom == 0.f) _seedFinding_deltaRMinBottom = _seedFinding_deltaRMin;
+  if (_seedFinding_deltaRMaxBottom == 0.f) _seedFinding_deltaRMaxBottom = _seedFinding_deltaRMax;
 }
 
 void ACTSSeededCKFTrackingProc::processRunHeader(LCRunHeader *) {}
@@ -395,10 +436,10 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   finderCfg.rMax = _seedFinding_rMax;
   finderCfg.deltaRMin = _seedFinding_deltaRMin;
   finderCfg.deltaRMax = _seedFinding_deltaRMax;
-  finderCfg.deltaRMinTopSP = _seedFinding_deltaRMin;
-  finderCfg.deltaRMaxTopSP = _seedFinding_deltaRMax;
-  finderCfg.deltaRMinBottomSP = _seedFinding_deltaRMin;            // TODO missing config params
-  finderCfg.deltaRMaxBottomSP = _seedFinding_deltaRMax;
+  finderCfg.deltaRMinTopSP = _seedFinding_deltaRMinTop;
+  finderCfg.deltaRMaxTopSP = _seedFinding_deltaRMaxTop;
+  finderCfg.deltaRMinBottomSP = _seedFinding_deltaRMinBottom;
+  finderCfg.deltaRMaxBottomSP = _seedFinding_deltaRMaxBottom;
   finderCfg.collisionRegionMin = -_seedFinding_collisionRegion;
   finderCfg.collisionRegionMax = _seedFinding_collisionRegion;
   finderCfg.zMin = -_seedFinding_zMax;
@@ -433,6 +474,25 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   gridCfg.zMax = finderCfg.zMax;
   gridCfg.zMin = finderCfg.zMin;
   gridCfg.impactMax = finderCfg.impactMax;
+  if (_seedFinding_zBinEdges.size() > 0)
+  {
+    gridCfg.zBinEdges.resize(_seedFinding_zBinEdges.size());
+    for (int k = 0; k < _seedFinding_zBinEdges.size(); k++)
+    {
+      float pos = std::atof(_seedFinding_zBinEdges[k].c_str());
+      if (pos >= finderCfg.zMin && pos < finderCfg.zMax)
+      {
+        gridCfg.zBinEdges[k] = pos;
+      }
+      else
+      {
+        streamlog_out(WARNING) << "Wrong parameter SeedFinding_zBinEdges; "
+                             << "default used" << std::endl;
+        gridCfg.zBinEdges.clear();
+        break;
+      }
+    }
+  }
 
   Acts::CylindricalSpacePointGridOptions gridOpts;
   gridOpts.bFieldInZ = (*magneticField()->getField(zeropos, magCache))[2];
@@ -459,8 +519,8 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
       spacePointPtrs.begin(), spacePointPtrs.end(), extractGlobalQuantities,
       rRangeSPExtent);
 
-  const Acts::GridBinFinder<2ul> bottomBinFinder(1, 1);       // TODO missing params
-  const Acts::GridBinFinder<2ul> topBinFinder(1, 1);          // TODO move into init
+  const Acts::GridBinFinder<2ul> bottomBinFinder(_phiBottomBinLen, _zBottomBinLen);
+  const Acts::GridBinFinder<2ul> topBinFinder(_phiTopBinLen, _zTopBinLen);
 
   auto spacePointsGrouping = Acts::CylindricalBinnedGroup<SSPoint>(
       std::move(grid), bottomBinFinder, topBinFinder);
@@ -478,8 +538,6 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
       std::floor(rRangeSPExtent.min(Acts::binR) / 2) * 2 +
           finderCfg.deltaRMiddleMinSPRange,
       up - finderCfg.deltaRMiddleMaxSPRange);                  // TODO investigate
-
-  // TODO missing check for finderCfg.useDetailedDoubleMeasurementInfo
 
   std::vector<Acts::BoundTrackParameters> paramseeds;
 
