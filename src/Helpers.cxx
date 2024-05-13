@@ -266,9 +266,17 @@ EVENT::Track* ACTS2Marlin_track(
                                curr_hit->getPosition()[1],
                                curr_hit->getPosition()[2]);
 
+    Acts::Result<Acts::Vector3> fieldRes =
+        magneticField->getField(hitPos, magCache);
+    if (!fieldRes.ok()) {
+      throw std::runtime_error("Field lookup error: " +
+                               fieldRes.error().value());
+    }
+    Acts::Vector3 field = *fieldRes;
+
     EVENT::TrackState* trackState = ACTSTracking::ACTS2Marlin_trackState(
             EVENT::TrackState::AtOther, trk_state.smoothed(),
-            trk_state.smoothedCovariance(), hitPos[2] / Acts::UnitConstants::T);
+            trk_state.smoothedCovariance(), field[2] / Acts::UnitConstants::T);
     statesOnTrack.push_back(trackState);
   }
 
