@@ -102,7 +102,6 @@ Processor that implements tripled seeding Combinatorial Kalman Filter. This proc
 |------------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | RunCKF                       | Run tracking using CKF. False means stop at the seeding stage.                                                            |
 | PropagateBackward            | Run CKF outside-in.                                                             |
-
 | InitialTrackError_RelP       | Track error estimate, momentum component (relative).                                                                      |
 | InitialTrackError_Phi        | Track error estimate, phi (radians).                                                                                      |
 | InitialTrackError_Lambda     | Track error estimate, lambda (radians).                                                                                   |
