@@ -21,6 +21,9 @@
 #include <Acts/TrackFitting/GainMatrixSmoother.hpp>
 #include <Acts/TrackFitting/GainMatrixUpdater.hpp>
 
+#include "Acts/EventData/VectorTrackContainer.hpp"
+#include "Acts/EventData/VectorMultiTrajectory.hpp"
+
 using namespace Acts::UnitLiterals;
 
 #include "Helpers.hxx"
@@ -28,15 +31,14 @@ using namespace Acts::UnitLiterals;
 #include "SourceLink.hxx"
 
 using TrackFinderOptions =
-    Acts::CombinatorialKalmanFilterOptions<ACTSTracking::SourceLinkAccessor,
-                                           ACTSTracking::MeasurementCalibrator,
-                                           Acts::MeasurementSelector>;
-
+    Acts::CombinatorialKalmanFilterOptions<ACTSTracking::SourceLinkAccessor::Iterator,
+                                           Acts::VectorMultiTrajectory>;
+/*
 using TrackFinderResult = Acts::Result<
     Acts::CombinatorialKalmanFilterResult<ACTSTracking::SourceLink>>;
 
 using TrackFinderResultContainer = std::vector<TrackFinderResult>;
-
+*/
 ACTSTruthCKFTrackingProc aACTSTruthCKFTrackingProc;
 
 ACTSTruthCKFTrackingProc::ACTSTruthCKFTrackingProc()
@@ -128,7 +130,7 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
     params[Acts::eBoundQOverP] = mcParticle->getCharge() / p;
 
     // build the track covariance matrix using the smearing sigmas
-    Acts::BoundSymMatrix cov = Acts::BoundSymMatrix::Zero();
+    Acts::BoundSquareMatrix cov = Acts::BoundSquareMatrix::Zero();
     cov(Acts::eBoundLoc0, Acts::eBoundLoc0) =
         std::pow(_initialTrackError_d0, 2);
     cov(Acts::eBoundLoc1, Acts::eBoundLoc1) =
@@ -140,8 +142,8 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
     cov(Acts::eBoundQOverP, Acts::eBoundQOverP) =
         std::pow(_initialTrackError_relP * p / (p * p), 2);
 
-    Acts::BoundTrackParameters seed(perigeeSurface, params,
-                                    mcParticle->getCharge(), cov);
+    Acts::BoundTrackParameters seed(perigeeSurface, params, cov,
+                                    ACTSTracking::convertParticle(mcParticle));
     seeds.push_back(seed);
   }
 
@@ -198,7 +200,7 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
 
     Acts::Vector2 loc = lpResult.value();
 
-    Acts::SymMatrix2 localCov = Acts::SymMatrix2::Zero();
+    Acts::SquareMatrix2 localCov = Acts::SquareMatrix2::Zero();
     const EVENT::TrackerHitPlane* hitplane =
         dynamic_cast<const EVENT::TrackerHitPlane*>(hit.second);
     if (hitplane) {
@@ -210,8 +212,9 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
 
     ACTSTracking::SourceLink sourceLink(surface->geometryId(),
                                         measurements.size(), hit.second);
-    ACTSTracking::Measurement meas = Acts::makeMeasurement(
-        sourceLink, loc, localCov, Acts::eBoundLoc0, Acts::eBoundLoc1);
+    Acts::SourceLink src_wrap { sourceLink };
+    Acts::Measurement meas = Acts::makeMeasurement(
+        src_wrap, loc, localCov, Acts::eBoundLoc0, Acts::eBoundLoc1);
 
     measurements.push_back(meas);
     sourceLinks.emplace_hint(sourceLinks.end(), sourceLink);
@@ -230,7 +233,7 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   using Stepper = Acts::EigenStepper<>;
   using Navigator = Acts::Navigator;
   using Propagator = Acts::Propagator<Stepper, Navigator>;
-  using CKF = Acts::CombinatorialKalmanFilter<Propagator, Updater, Smoother>;
+  using CKF = Acts::CombinatorialKalmanFilter<Propagator, Acts::VectorMultiTrajectory>;
 
   // Configurations
   Navigator::Config navigatorCfg{trackingGeometry()};
@@ -247,21 +250,44 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   // Set the options
   Acts::MeasurementSelector::Config measurementSelectorCfg = {
       {Acts::GeometryIdentifier(),
-       {_CKF_chi2CutOff, (std::size_t)(_CKF_numMeasurementsCutOff)}}};
+       { {}, { _CKF_chi2CutOff }, { (std::size_t)(_CKF_numMeasurementsCutOff) }}}};
 
   Acts::PropagatorPlainOptions pOptions;
   pOptions.maxSteps = 10000;
+
+  Acts::GainMatrixUpdater kfUpdater;
+  Acts::GainMatrixSmoother kfSmoother;
+
+  Acts::MeasurementSelector measSel { measurementSelectorCfg };
+  ACTSTracking::MeasurementCalibrator measCal { measurements };
+  Acts::CombinatorialKalmanFilterExtensions<Acts::VectorMultiTrajectory>
+      extensions;
+  extensions.calibrator.connect<
+      &ACTSTracking::MeasurementCalibrator::calibrate>(
+      &measCal);
+  extensions.updater.connect<
+      &Acts::GainMatrixUpdater::operator()<Acts::VectorMultiTrajectory>>(
+      &kfUpdater);
+  extensions.smoother.connect<
+      &Acts::GainMatrixSmoother::operator()<Acts::VectorMultiTrajectory>>(
+      &kfSmoother);
+  extensions.measurementSelector
+      .connect<&Acts::MeasurementSelector::select<Acts::VectorMultiTrajectory>>(
+          &measSel);
+
+  using ACTSTracking::SourceLinkAccessor;
+  SourceLinkAccessor slAccessor;
+  slAccessor.container = &sourceLinks;
+  Acts::SourceLinkAccessorDelegate<SourceLinkAccessor::Iterator> slAccessorDelegate;
+  slAccessorDelegate.connect<&SourceLinkAccessor::range>(&slAccessor);
 
   // std::unique_ptr<const Acts::Logger>
   // logger=Acts::getDefaultLogger("TrackFitting",
   // Acts::Logging::Level::VERBOSE);
   TrackFinderOptions ckfOptions = TrackFinderOptions(
       geometryContext(), magneticFieldContext(), calibrationContext(),
-      ACTSTracking::SourceLinkAccessor(),
-      ACTSTracking::MeasurementCalibrator(std::move(measurements)),
-      Acts::MeasurementSelector(measurementSelectorCfg),
-      // Acts::LoggerWrapper{*logger}, pOptions,
-      Acts::getDummyLogger(), pOptions, &(*perigeeSurface));
+      slAccessorDelegate,
+      extensions, pOptions, perigeeSurface.get());
 
   //
   // Output
@@ -276,6 +302,31 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
 
   //
   // Find the tracks
+  using TrackContainer =
+      Acts::TrackContainer<Acts::VectorTrackContainer,
+                           Acts::VectorMultiTrajectory, std::shared_ptr>;
+  auto trackContainer = std::make_shared<Acts::VectorTrackContainer>();
+  auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
+  TrackContainer tracks(trackContainer, trackStateContainer);
+
+  for (std::size_t iseed = 0; iseed < seeds.size(); ++iseed) {
+    auto result = trackFinder.findTracks(seeds.at(iseed), ckfOptions, tracks);
+    if (result.ok()) {
+      const auto& fitOutput = result.value();
+      for (const auto& trackTip : fitOutput)
+      {
+        std::cout << trackTip.chi2() << std::endl;
+        EVENT::Track* track = ACTSTracking::ACTS2Marlin_track(
+            trackTip, magneticField(), magCache);
+        trackCollection->addElement(track);
+      }
+    } else {
+      streamlog_out(WARNING) << "Track fit error: " << result.error() << std::endl;
+      _fitFails++;
+    }
+
+  }
+/*
   auto t1 = std::chrono::high_resolution_clock::now();
   TrackFinderResultContainer results =
       trackFinder.findTracks(sourceLinks, seeds, ckfOptions);
@@ -336,6 +387,7 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
       _fitFails++;
     }
   }
+*/
 
   // Save the output track collection
   evt->addCollection(trackCollection, _outputTrackCollection);

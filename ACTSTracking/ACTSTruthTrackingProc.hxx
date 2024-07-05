@@ -1,11 +1,13 @@
 #ifndef ACTSTruthTrackingProc_h
 #define ACTSTruthTrackingProc_h 1
 
+#include <EVENT/Track.h>
 #include <EVENT/TrackerHit.h>
 
 #include <UTIL/CellIDDecoder.h>
 
 #include <Acts/Definitions/Units.hpp>
+#include "Acts/EventData/ParticleHypothesis.hpp"
 
 #include "ACTSProcBase.hxx"
 
