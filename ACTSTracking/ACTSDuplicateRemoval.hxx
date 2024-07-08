@@ -1,9 +1,10 @@
 #ifndef ACTSDuplicateRemoval_h
 #define ACTSDuplicateRemoval_h 1
 
-#include <EVENT/Track.h>
+#include <edm4hep/Track.h>
+#include <edm4hep/TrackCollection.h>
 
-#include <marlin/Processor.h>
+#include <GaudiAlg/GaudiAlgorithm.h>
 
 //! \brief Remove track duplicates
 /**
@@ -13,36 +14,18 @@
  * @author Karol Krizka
  * @version $Id$
  */
-class ACTSDuplicateRemoval : public marlin::Processor {
- public:
-  virtual marlin::Processor* newProcessor() { return new ACTSDuplicateRemoval; }
+class ACTSDuplicateRemoval : public GaudiAlgorithm {
+public:
+	ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc);
+	virtual ~ACTSDuplicateRemoval();
 
-  ACTSDuplicateRemoval(const ACTSDuplicateRemoval&) = delete;
-  ACTSDuplicateRemoval& operator=(const ACTSDuplicateRemoval&) = delete;
-  ACTSDuplicateRemoval();
+	virtual StatusCode initialize();
+	virtual StatusCode execute();
+	virtual StatusCode finalize();
 
-  /** Called at the begin of the job before anything is read.
-   * Use to initialize the processor, e.g. book histograms.
-   */
-  virtual void init();
-
-  /** Called for every run.
-   */
-  virtual void processRunHeader(LCRunHeader* run);
-
-  /** Called for every event - the working horse.
-   */
-  virtual void processEvent(LCEvent* evt);
-
-  virtual void check(LCEvent* evt);
-
-  /** Called after data processing for clean up.
-   */
-  virtual void end();
-
- private:
-  std::string _inputTrackCollection;
-  std::string _outputTrackCollection;
+private:
+	Gaudi::Property<std::string> m_inputTrackCollection{this, "InputTrackCollectionName", "TruthTracks", "Name of input track collection"};
+	Gaudi::Property<std::string> m_outputTrackCollection{this, "OutputTrackCollection", "DedupedTruthTracks", "Name of output track collection"};
 };
 
 namespace ACTSTracking {
@@ -54,8 +37,9 @@ namespace ACTSTracking {
  *
  * 2. is only run with 1. is ambigious.
  */
-bool track_duplicate_compare(const EVENT::Track* trk1,
-                             const EVENT::Track* trk2);
+	bool track_duplicate_compare(const edm4hep::Track& trk1, const edm4hep::Track& trk2);
+	bool tracks_quality_compart(const edm4hep::Track& trk1, edm4hep::Track& trk2);
+	bol tracks_equal(const edm4hep::Track& trk1, edm4hep::Track& trk2);
 }  // namespace ACTSTracking
 
 #endif
