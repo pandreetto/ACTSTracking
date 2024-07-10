@@ -389,7 +389,6 @@ EVENT::Track* ACTS2Marlin_track(
   // Set propagator options
   Acts::PropagatorOptions myCaloPropOptions(geoContext, magFieldContext);
   myCaloPropOptions.pathLimit = 20 * Acts::UnitConstants::m;
-  std::cout << "init prop option" << std::endl;
 
   //Let's try with our private propagator
   // Configurations
@@ -402,9 +401,9 @@ EVENT::Track* ACTS2Marlin_track(
   Stepper stepper(magneticField);
   Navigator navigator(navigatorCfg);
   Propagator mypropagator(std::move(stepper), std::move(navigator));
-  auto end_parameters = mypropagator.propagate(start, *caloSurface, myCaloPropOptions).value().endParameters;
-  if (end_parameters.has_value()) {
-    std::cout << "CaloPhi:" << phi << " " << end_parameters->parameters()[Acts::eBoundPhi] << std::endl;
+  auto resultProp = mypropagator.propagate(start, *caloSurface, myCaloPropOptions);
+  if (resultProp.ok()) {
+    auto end_parameters = resultProp.value().endParameters;
     const Acts::BoundMatrix& atCaloCovariance = *(end_parameters->covariance());
 
     EVENT::TrackState* trackStateAtCalo = ACTSTracking::ACTS2Marlin_trackState(
@@ -415,7 +414,6 @@ EVENT::Track* ACTS2Marlin_track(
     std::cout << "Failed propagation!" << std::endl;
   }
   
-
   std::reverse(hitsOnTrack.begin(), hitsOnTrack.end());
   std::reverse(statesOnTrack.begin(), statesOnTrack.end());
 
