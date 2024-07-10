@@ -236,6 +236,7 @@ EVENT::Track* ACTS2Marlin_track(
 
   track->setChi2(fitter_res.chi2());
   track->setNdf(fitter_res.nDoF());
+  track->setNholes(fitter_res.nHoles());
 
   const Acts::Vector3 zeroPos(0, 0, 0);
   Acts::Result<Acts::Vector3> fieldRes = magneticField->getField(zeroPos, magCache);
