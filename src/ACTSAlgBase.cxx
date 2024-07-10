@@ -1,4 +1,4 @@
-#include "ACTSProcBase.hxx"
+#include "ACTSAlgBase.hxx"
 
 #include <TGeoManager.h>
 
@@ -26,82 +26,70 @@
 
 using namespace ACTSTracking;
 
-ACTSProcBase::ACTSProcBase(const std::string& procname) : Processor(procname) {
-  // configuration
-  registerProcessorParameter(
-      "MatFile", "Path to the material description JSON file. Can be empty.",
-      _matFile, std::string(""));
-  registerProcessorParameter("TGeoFile", "Path to the tracker geometry file.",
-                             _tgeoFile, std::string(""));
+DECLARE_COMPONENT(ACTSAlgBase)
+
+ACTSAlgBase::ACTSAlgBase(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+	// configuration
+	decalreProperty("MatFile", m_matFile = std::string(""), "Path to the material description JSON file. Can be empty.");
+	declareProperty("TGeoFile", m_tgeoFile = std::string(""), "Path to the tracker geometry file.");
 }
 
-std::shared_ptr<GeometryIdMappingTool> ACTSProcBase::geoIDMappingTool() const {
-  return _geoIDMappingTool;
+std::shared_ptr<GeometryIdMappingTool> ACTSAlgBase::geoIDMappingTool() const {
+	return m_geoIDMappingTool;
 }
 
-const Acts::MagneticFieldContext& ACTSProcBase::magneticFieldContext() const {
-  return _magneticFieldContext;
+const Acts::MagneticFieldContext& ACTSAlgBase::magneticFieldContext() const {
+	return m_magneticFieldContext;
 }
 
-const Acts::GeometryContext& ACTSProcBase::geometryContext() const {
-  return _geometryContext;
+const Acts::GeometryContext& ACTSAlgBase::geometryContext() const {
+	return m_geometryContext;
 }
 
-const Acts::CalibrationContext& ACTSProcBase::calibrationContext() const {
-  return _calibrationContext;
+const Acts::CalibrationContext& ACTSAlgBase::calibrationContext() const {
+	return m_calibrationContext;
 }
 
-std::shared_ptr<Acts::MagneticFieldProvider> ACTSProcBase::magneticField()
-    const {
-  return _magneticField;
+std::shared_ptr<Acts::MagneticFieldProvider> ACTSAlgBase::magneticField() const {
+	return m_magneticField;
 }
 
-std::shared_ptr<const Acts::TrackingGeometry> ACTSProcBase::trackingGeometry()
-    const {
-  return _trackingGeometry;
+std::shared_ptr<const Acts::TrackingGeometry> ACTSAlgBase::trackingGeometry() const {
+	return m_trackingGeometry;
 }
 
-const Acts::Surface* ACTSProcBase::findSurface(
-    const EVENT::TrackerHit* hit) const {
-  uint64_t moduleGeoId = _geoIDMappingTool->getGeometryID(hit);
-  return _trackingGeometry->findSurface(moduleGeoId);
+const Acts::Surface* ACTSAlgBase::findSurface(const edm4hep::TrackerHit hit) const {
+	uint64_t moduleGeoId = m_geoIDMappingTool->getGeometryID(hit);
+	return m_trackingGeometry->findSurface(moduleGeoId);
 }
 
-void ACTSProcBase::init() {
-  // Parse parameters
-  _matFile = findFile(_matFile);
-  _tgeoFile = findFile(_tgeoFile);
+StatusCode ACTSAlgBase::initialize() {
+	// Parse parameters
+	m_matFile = findFile(m_matFile);
+	m_tgeoFile = findFile(m_tgeoFile);
 
-  // Print the initial parameters
-  printParameters();
+	// Load geometry
+	message() << " -------------------------------------" << endmsg;
 
-  // Load geometry
-  streamlog_out(MESSAGE) << " -------------------------------------"
-                         << std::endl;
+	message() << " -- Building magnetic field" << endmsg;
+	buildBfield();
+	message() << " -- Building tracking detector" << endmsg;
+	buildDetector();
 
-  streamlog_out(MESSAGE) << " -- Building magnetic field" << std::endl;
-  buildBfield();
-  streamlog_out(MESSAGE) << " -- Building tracking detector" << std::endl;
-  buildDetector();
+	message()  // << " ---- instantiated  geometry for detector " <<
+	// theDetector.header().name()  << std::endl
+	<< " -------------------------------------" << endmsg;
 
-  streamlog_out(MESSAGE)  // << " ---- instantiated  geometry for detector " <<
-                          // theDetector.header().name()  << std::endl
-      << " -------------------------------------" << std::endl;
-
-  // Initialize mapping tool
-  _geoIDMappingTool = std::make_shared<GeometryIdMappingTool>(
-      lcio::LCTrackerCellID::encoding_string());
+	// Initialize mapping tool
+	m_geoIDMappingTool = std::make_shared<GeometryIdMappingTool>("subdet:5,side:-2,layer:9,module:8,sensor:8");
 }
 
-void ACTSProcBase::processRunHeader(LCRunHeader* run) {}
 
-void ACTSProcBase::processEvent(LCEvent* evt) {}
+StatusCode ACTSAlgBase::execute() { return StatusCode::SUCCESS; }
 
-void ACTSProcBase::check(LCEvent* evt) {}
+StatusCode ACTSAlgBase::finalize() { return StatusCode::SUCCESS; }
 
-void ACTSProcBase::end() {}
-
-void ACTSProcBase::buildDetector() {
+void ACTSAlgBase::buildDetector() {
   // Logging
   Acts::Logging::Level surfaceLogLevel = Acts::Logging::INFO;
   Acts::Logging::Level layerLogLevel = Acts::Logging::INFO;
@@ -109,23 +97,23 @@ void ACTSProcBase::buildDetector() {
 
   // Material description
   std::shared_ptr<const Acts::IMaterialDecorator> matDeco = nullptr;
-  if (!_matFile.empty()) {
+  if (!m_matFile.empty()) {
     // Set up the converter first
     Acts::MaterialMapJsonConverter::Config jsonGeoConvConfig;
     // Set up the json-based decorator
     matDeco = std::make_shared<const Acts::JsonMaterialDecorator>(
-        jsonGeoConvConfig, _matFile, Acts::Logging::INFO);
+        jsonGeoConvConfig, m_matFile, Acts::Logging::INFO);
   }
 
   // Geometry
   TGeoManager* gGeoManagerOld = nullptr;
-  if (!_tgeoFile.empty()) {
+  if (!m_tgeoFile.empty()) {
     // Save current geometry. This is needed by all the other Processors
     gGeoManagerOld = gGeoManager;
     gGeoManager = nullptr;  // prevents it from being deleted
 
     // Load new geometry
-    TGeoManager::Import(_tgeoFile.c_str());
+    TGeoManager::Import(m_tgeoFile.c_str());
   }
 
   // configure surface array creator
@@ -623,12 +611,12 @@ void ACTSProcBase::buildDetector() {
           tgConfig,
           Acts::getDefaultLogger("TrackerGeometryBuilder", volumeLogLevel));
   // get the geometry
-  _trackingGeometry =
-      cylinderGeometryBuilder->trackingGeometry(_geometryContext);
+  m_trackingGeometry =
+      cylinderGeometryBuilder->trackingGeometry(m_geometryContext);
   // collect the detector element store
   for (auto& lBuilder : tgLayerBuilders) {
     auto detElements = lBuilder->detectorElements();
-    _detectorStore.insert(_detectorStore.begin(), detElements.begin(),
+    m_detectorStore.insert(m_detectorStore.begin(), detElements.begin(),
                           detElements.end());
   }
 
@@ -639,7 +627,7 @@ void ACTSProcBase::buildDetector() {
   }
 }
 
-void ACTSProcBase::buildBfield() {
+void ACTSAlgBase::buildBfield() {
   // Get the magnetic field
   dd4hep::Detector& lcdd = dd4hep::Detector::getInstance();
   const double position[3] = {
@@ -656,7 +644,7 @@ void ACTSProcBase::buildBfield() {
   //  magneticFieldVector[2] = 3.57e-13
   //  dd4hep::tesla = 1e-13
   //  Acts::UnitConstants::T = 0.000299792
-  _magneticField = std::make_shared<Acts::ConstantBField>(Acts::Vector3(
+  m_magneticField = std::make_shared<Acts::ConstantBField>(Acts::Vector3(
       magneticFieldVector[0] / dd4hep::tesla * Acts::UnitConstants::T,
       magneticFieldVector[1] / dd4hep::tesla * Acts::UnitConstants::T,
       magneticFieldVector[2] / dd4hep::tesla * Acts::UnitConstants::T));

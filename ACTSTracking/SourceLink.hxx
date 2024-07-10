@@ -13,7 +13,7 @@ class SourceLink final {
   //! \brief Construct from geometry identifier and hit
   SourceLink(Acts::GeometryIdentifier gid, std::size_t index,
              edm4hep::TrackerHit* edmhit)
-      : m_geometryId(gid), m_index(index), m_edmhit(edmhit) {}
+      : m_geometryId(gid), m_index(index), m_edm4hephit(edmhit) {}
 
   // Construct an invalid source link. Must be default constructible to
   /// satisfy SourceLinkConcept.
@@ -38,7 +38,7 @@ class SourceLink final {
   friend constexpr bool operator==(const SourceLink& lhs,
                                    const SourceLink& rhs) {
     return (lhs.m_geometryId == rhs.m_geometryId) and
-           (lhs.m_index == rhs.m_index) and (lhs.m_edmhit == rhs.m_edmhit);
+           (lhs.m_index == rhs.m_index) and (lhs.m_edm4hephit == rhs.m_edm4hephit);
   }
   friend constexpr bool operator!=(const SourceLink& lhs,
                                    const SourceLink& rhs) {

@@ -1,148 +1,110 @@
-#include "TrackTruthProc.hxx"
-
-#include <EVENT/MCParticle.h>
-#include <EVENT/SimTrackerHit.h>
-#include <EVENT/Track.h>
-
-#include <IMPL/LCCollectionVec.h>
-
-#include <UTIL/LCRelationNavigator.h>
-
+#include "TrackTruthAlg.hxx"
 #include "Helpers.hxx"
 
-// ----- include for verbosity dependend logging ---------
-#include <marlin/VerbosityLevels.h>
 
 //------------------------------------------------------------------------------------------------
 
-TrackTruthProc aTrackTruthProc;
+DECLARE_COMPONENT(TrackTruthAlg)
 
-TrackTruthProc::TrackTruthProc() : Processor("TrackTruthProc") {
-  // modify processor description
-  _description = "Associate MCParticle to a reconstructed Track";
-
-  registerInputCollection(LCIO::TRACK, "TrackCollection",
-                          "Name of reconstructed track input collection",
-                          _inColTrack, std::string("Tracks"));
-
-  registerInputCollection(LCIO::MCPARTICLE, "MCParticleCollectionName",
-                          "Name of the MCParticle input collection", _inColMCP,
-                          std::string("MCParticle"));
-
-  registerInputCollections(
-      LCIO::LCRELATION, "TrackerHit2SimTrackerHitRelationName",
-      "Name of TrackerHit to SimTrackHit relation collection", _inColH2SH, {});
-
-  registerOutputCollection(LCIO::LCRELATION, "Particle2TrackRelationName",
-                           "Map from MC particle to reconstructed track.",
-                           _outColMC2T,
-                           std::string("Particle2TrackRelationName"));
+TrackTruthAlg::TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm {
+	declareProperty("TrackCollection", 
+			m_inColTrack = std::string("Tracks"), 
+			"Name of reconstructed track input collection.");
+	declareProperty("MCParticleCollectionName", 
+			m_inColMCP = std::string("MCParticle"), 
+			"Name of the MCParticle input collection");
+	declareProperty("TrackerHit2SimTrackerHitRelationName", 
+			m_inColH2SH, 
+			"Name of TrackerHit to SimTrackHit relation collection");
+	declareProperty("Particle2TrackRelationName", 
+			m_outColMC2T = std::string("Particle2TrackRelationName"), 
+			"Map from MC particle to reconstructed track.")
 }
 
-//============================================================================================================================
-
-void TrackTruthProc::init() {
-  // usually a good idea to
-  printParameters();
-}
-//============================================================================================================================
-
-void TrackTruthProc::processRunHeader(LCRunHeader* /*run*/) {}
-
-//============================================================================================================================
-
-void TrackTruthProc::processEvent(LCEvent* evt) {
-  //
-  // Load relations
-  std::vector<std::shared_ptr<LCRelationNavigator>> hit2simhits;
-  for (const std::string& name : _inColH2SH) {
-    // Get the collection of tracker hit relations
-    LCCollection* trackerHitRelationCollection =
-        ACTSTracking::getCollection(evt, name);
-    std::shared_ptr<LCRelationNavigator> hit2simhit =
-        std::make_shared<LCRelationNavigator>(trackerHitRelationCollection);
-    hit2simhits.push_back(hit2simhit);
-  }
-
-  //
-  // MC particles
-  LCCollection* particleCollection =
-      ACTSTracking::getCollection(evt, _inColMCP);
-  if (particleCollection == nullptr) return;
-  int nParticles = particleCollection->getNumberOfElements();
-
-  // store best track for each mc particle
-  std::map<EVENT::MCParticle*, EVENT::Track*> mcBestMatch_track;
-  std::map<EVENT::MCParticle*, float> mcBestMatch_frac;
-
-  //
-  // Tracks
-  LCCollection* trackCollection = ACTSTracking::getCollection(evt, _inColTrack);
-  if (trackCollection == nullptr) return;
-  int nTracks = trackCollection->getNumberOfElements();
-
-  for (int itT = 0; itT < nTracks; ++itT) {
-    // Get the track
-    EVENT::Track* track =
-        static_cast<EVENT::Track*>(trackCollection->getElementAt(itT));
-
-    // Loop over all hits in a track and associate it to a MC particle
-    std::map<EVENT::MCParticle*, uint32_t> trackhit2mc;
-    for (EVENT::TrackerHit* hit : track->getTrackerHits()) {
-      // Find the sim hit
-      EVENT::SimTrackerHit* simHit = nullptr;
-      for (std::shared_ptr<LCRelationNavigator> hit2simhit : hit2simhits) {
-        const LCObjectVec& simHitVector = hit2simhit->getRelatedToObjects(hit);
-        if (!simHitVector.empty()) {  // Found the sim hit
-          simHit = dynamic_cast<SimTrackerHit*>(simHitVector.at(0));
-          break;
-        }
-      }
-
-      // Increment MC particle counter
-      if (simHit->getMCParticle() != nullptr)
-        trackhit2mc[simHit->getMCParticle()]++;
-    }
-
-    // Update best matches
-    for (const std::pair<EVENT::MCParticle*, uint32_t>& mchit : trackhit2mc) {
-      float frac =
-          static_cast<float>(mchit.second) / track->getTrackerHits().size();
-
-      bool better =
-          mcBestMatch_track.count(mchit.first) == 0 ||  // no best match exists
-          mcBestMatch_frac[mchit.first] <
-              frac;  // this match is better (more hits on track)
-
-      if (better) {
-        mcBestMatch_track[mchit.first] = track;
-        mcBestMatch_frac[mchit.first] = frac;
-      }
-    }
-  }
-
-  //
-  // Save the best matches
-  LCRelationNavigator relMC2T(LCIO::MCPARTICLE, LCIO::TRACK);
-  for (const std::pair<EVENT::MCParticle*, EVENT::Track*>& mctrk :
-       mcBestMatch_track) {
-    relMC2T.addRelation(mctrk.first, mctrk.second,
-                        mcBestMatch_frac[mctrk.first]);
-  }
-
-  LCCollectionVec* outColMC2T = (LCCollectionVec*)relMC2T.createLCCollection();
-  outColMC2T->setTransient(true);
-
-  evt->addCollection(outColMC2T, _outColMC2T);
+StatusCode TrackTruthAlg::initialize() {
+	info() << "Initializing TrackTruthAlg" << endmsg;
+	return StatusCode::SUCCESS;
 }
 
-//============================================================================================================================
+StatusCode TrackTruthAlg::execute() {
+	// Load Collections
+	edm4hep::TrackCollection* tracks = nullptr;
+	edm4hep::MCParticleCollection mcParticles* = nullptr;
+	if (ACTSTracking::getCollection(evtSvc(), m_inColTrack, tracks).isFailure() ||
+	    ACTSTracking::getCollection(evtSvc(), m_inColMCP, mcParticles).isFailure()) {
+		return StatusCode::FAILURE;
+	}
 
-void TrackTruthProc::check(LCEvent* /*evt*/) {
-  // nothing to check here - could be used to fill checkplots in reconstruction
-  // processor
+	// Map TrackerHits to SimTrackerHits
+	std::vector<std::map<edm4hep::TrackerHit, edm4hep::SimTrackerHit>> trackerHit2SimHits;
+	for (const std::string& name : m_inColH2SH) {
+		//Retrieve Collection
+		edm4hep::TrackerHitPlaneCollection* trackerHitRelations = nullptr;
+		if (ACTSTracking::getCollection(evtSvc(), name, trackerHitRelations).isFailure()) {
+			return StatusCode::FAILURE;
+		}
+		//Store Relations in a map
+		std::map<edm4hep::TrackerHit, edm4hep::SimTrackerHit> trackerHit2SimHit;
+		for (auto& hitRel : *trackerHitRelations) {
+			auto trackerHit = hitRel.getFrom<emd4hep::TrackerHit>();
+			auto simTrackerHit = hitRel.getTo<emd4hep::SimTrackerHit>();
+			trackerHit2SimHit[trackerHit] = simTrackerHit;
+		}
+		//Push map to vector of maps
+		trackerHit2SimHits.push_back(trackerHit2SimHit);
+	}
+
+	// Map best matches MCP to Track
+	std::map<edm4hep::MCParticle, edm4hep::Track> mcBestMatchTrack;
+	std::map<edm4hep::MCParticle, float> mcBestMatchFrac;
+
+	for (auto& track: *tracks) {
+		//Get Track
+		std::map<edm4hep::MCParticle, uint32_t> trackHit2Mc;
+		for (auto& hit : track.getTrackerHits()) {
+			//Search for SimHit
+			edm4hep::SimTrackerHit* simHit = nullptr;
+			for (auto& hit2simhit : *trackerHit2SimHits) {
+				const auto simHitIter = hit2simhit.find(hit);
+				if (simHitIter != trackerHit2SimHit.end()) { //Found SimHit
+					auto simHit = simHitIter->second;
+					break;
+				}
+			}
+			if (simHit.getParticle().isAvailable()) {
+				trackHit2Mc[simHit.getParticle()]++; //Increment MC Particle counter
+			}
+		}
+
+		// Update Best Matches
+		for (const auto& [mcParticle, hitCount] : trackHit2Mc) {
+			float frac = static_cast<float>(hitCount) / track.trackerHits_size();
+			bool better = mcBestMatchTrack.count(mcParticle) == 0 || // no best matches exist
+				      mcBestMatchFrac[mcParticle] < frac; // this match is better (more hits on track)
+			if (better) {
+				mcBestMatchTrack[mcParticle] = track;
+				mcBestMatchFrac[mcParticle] = frac;
+			}
+		}
+	}
+
+	// Save the best matches
+	edm4hep::MCRecoParticleAssociationCollection outColMC2T =  std::make_unique<edm4hep::MCRecoParticleAssociationCollection>();
+	for (const auto& [mcParticle, track] : mcBestMatchTrack) {
+		edm4hep::MutableMCRecoParticleAssociation association;
+		association.setRec(track);
+		association.setSim(mcParticle);
+		association.setWeight(mcBestMatchFrac[mcParticle]);
+		outColMC2T.push_back(association);
+	}
+
+	put(outColMC2T, m_outColMC2T);
+	return StatusCode::SUCCESS;
+}
+	
+	
+StatusCode TrackTruthAlg::finalize() {
+	info() << "Finalizing TrackTruthAlg" << endmsg;
+	return StatusCode::SUCCESS;
 }
 
-//============================================================================================================================
-
-void TrackTruthProc::end() {}

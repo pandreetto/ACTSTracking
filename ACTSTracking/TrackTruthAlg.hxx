@@ -1,8 +1,18 @@
 #ifndef TrackTruthAlg_h
 #define TrackTruthAlg_h 1
 
-#include <edm4hep.h>
+//#include <edm4hep.h>
+#include <edm4hep/MCParticle.h>
+#include <edm4hep/SimTrackerHit.h>
+#include <edm4hep/Track.h>
+#include <edm4hep/TrackerHit.h>
+
 #include <GaudiAlg/GaudiAlgorithm>
+#include <GaudiKernel/ServiceHandle.h>
+#include <GaudiKernel/ISvcLocator.h>
+#include <GaudiKernel/ToolHandle.h>
+#include <k4FWCore/DataHandle.h>
+
 #include <string>
 #include <vector>
 

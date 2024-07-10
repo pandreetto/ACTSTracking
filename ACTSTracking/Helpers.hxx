@@ -4,6 +4,14 @@
 #include <edm4hep/Track.h>
 #include <edm4hep/TrackState.h>
 
+#include <GaudiKernel/MsgStream.h>
+#include <GaudiKernel/ServiceHandle.h>
+#include <GaudiKernel/StatusCode.h>
+#include <GaudiKernel/IEvtSelector.h>
+#include <GaudiKernel/IDataProviderSvc.h>
+#include <GaudiKernel/IDataManagerSvc.h>
+#include <GaudiKernel/SmartDataPtr.h>
+
 #include <Acts/EventData/TrackParameters.hpp>
 #include "Acts/EventData/ParticleHypothesis.hpp"
 #include <Acts/MagneticField/MagneticFieldProvider.hpp>
@@ -69,6 +77,9 @@ edm4hep::TrackState ACTS2edm4hep_trackState(int location,
                                           const Acts::BoundVector& value,
                                           const Acts::BoundMatrix& cov,
                                           double Bz);
+
+template <typename T>
+StatusCode getCollection(ISvcLocator* svcLoc, const std::string& collectionName const T*& collection) {}
 
 //! Get particle hypothesis in ACTS format 
 /**

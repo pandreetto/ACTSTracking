@@ -61,11 +61,8 @@ StatusCode ACTSDuplicateRemoval::initialize() {
 }
 
 void ACTSDuplicateRemoval::execute() {
-	auto inputTracks = evtSvc()->getCollection<edm4hep::TrackCollection>(m_inputTrackCollection);
-	if (!trackCollection) {
-		error() << "Failed to retrieve Track Collection" << endmsg;
-		return StatusCode::FAILURE;
-	}
+	const edm4hep::TrackCollection trackCollecion = nullptr;
+	if (ACTSTracking::getCollecion(evtSvc(), m_inputTrackCollection, trackCollection).isFailure()) { return StatusCode::FAILURE; }
 	auto outputTracks = new edm4hep::TrackCollection();
 
 	std::vector<edm4hep::Track> sortedInput;

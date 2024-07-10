@@ -57,7 +57,7 @@ protected:
 	std::shared_ptr<const Acts::TrackingGeometry> trackingGeometry() const;
 
 	//! Find surface for hit
-	const Acts::Surface* findSurface(const edm4hep::TrackerHit* hit) const;
+	const Acts::Surface* findSurface(const edm4hep::TrackerHit hit) const;
 
 private:
 	std::shared_ptr<ACTSTracking::GeometryIdMappingTool> m_geoIDMappingTool;

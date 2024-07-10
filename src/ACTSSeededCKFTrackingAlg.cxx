@@ -133,8 +133,8 @@ StatusCode ACTSSeededCKFTrackingAlg::execute() {
 	std::vector<std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHit*>> sortedHits;
 	for (const std::string &collection : m_inputTrackerHitCollections) {
 		// Get the collection of tracker hits
-		auto trackerHitCollection = evtSvc()->getCollection<edm4hep::TrackerHit>(collection);
-		if (!trackerHitCollection) continue;
+		edm4hep::TrackerHitCollection trackerHitCollection = nullptr;
+		if (ACTSTracking::getCollection(evtSvc(), collection, trackerHitCollection).isFailure()) { continue; }
 
 		for (auto& hit : *trackerHitCollection) {
 			sortedHits.push_back(std::make_pair(geoIDMappingTool()->getGeometryID(hit), &hit));
