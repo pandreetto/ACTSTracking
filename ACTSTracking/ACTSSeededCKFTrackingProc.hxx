@@ -60,6 +60,10 @@ class ACTSSeededCKFTrackingProc : public ACTSProcBase {
   bool _runCKF = true;
   bool _propagateBackward = false;
 
+  // Extrapolation to calo settings
+  float _caloFaceR = 1857; //mm
+  float _caloFaceZ = 2307; //mm
+
   // Seed finding configuration
   float _seedFinding_rMax = 150;
   float _seedFinding_deltaRMin = 5;

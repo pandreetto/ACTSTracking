@@ -27,6 +27,10 @@
 #include <Acts/TrackFitting/GainMatrixSmoother.hpp>
 #include <Acts/TrackFitting/GainMatrixUpdater.hpp>
 
+#include <Acts/Surfaces/CylinderSurface.hpp>
+#include <Acts/Definitions/Algebra.hpp>
+#include <Acts/EventData/ParticleHypothesis.hpp>
+
 using namespace Acts::UnitLiterals;
 
 #include "Helpers.hxx"
@@ -71,6 +75,15 @@ ACTSSeededCKFTrackingProc::ACTSSeededCKFTrackingProc()
   registerProcessorParameter("InitialTrackError_Pos",
                              "Track error estimate, local position (mm).",
                              _initialTrackError_pos, 10_um);
+
+  // Extrapolation to calo surface
+  registerProcessorParameter("CaloFace_Radius",
+                             "ECAL Inner Radius (mm).",
+                             _caloFaceR, _caloFaceR);
+  
+  registerProcessorParameter("CaloFace_Z",
+                             "ECAL half length (mm).",
+                             _caloFaceZ, _caloFaceZ);
 
   // Seeding configurations
   registerProcessorParameter(
@@ -679,6 +692,48 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
               << "\tnOutliers     " << trackTip.nOutliers() << std::endl;
           streamlog_out(DEBUG)
               << "\tnStates       " << trackTip.nTrackStates() << std::endl;
+
+          //FM: attempt at propagating to calo surface
+          double radius = _caloFaceR * Acts::UnitConstants::mm; // Radius in mm
+          double halfLength = _caloFaceZ * Acts::UnitConstants::mm; // Half-height in mm
+
+          // Create the CaloSurface
+          auto caloCylinder = std::make_shared<Acts::CylinderBounds>(radius, halfLength);
+          auto caloSurface = Acts::Surface::makeShared<Acts::CylinderSurface>(Acts::Transform3::Identity(), caloCylinder);
+
+          streamlog_out(DEBUG) <<  "Created the calo cylindrical surface" << std::endl;
+
+          // define start parameters - swap this out with some smart call
+          Acts::BoundVector params = trackTip.parameters();
+          double d0 = params[Acts::eBoundLoc0];
+          double z0 = params[Acts::eBoundLoc1];
+          double phi = params[Acts::eBoundPhi];
+          double theta = params[Acts::eBoundTheta];
+          double qoverp = params[Acts::eBoundQOverP];
+          double time = params[Acts::eBoundTime];
+
+          Acts::Vector3 pos(d0 * cos(phi), d0 * sin(phi), z0);
+          Acts::BoundMatrix cov = trackTip.covariance();
+
+          Acts::CurvilinearTrackParameters start(Acts::VectorHelpers::makeVector4(pos, time), phi, theta, qoverp, cov, Acts::ParticleHypothesis::pion());
+          streamlog_out(DEBUG) << "Retrieved the start track parameters" << std::endl;
+          
+          // Set propagator options
+          Acts::PropagatorOptions myCaloPropOptions(geometryContext(), magneticFieldContext());
+          myCaloPropOptions.pathLimit = 20 * Acts::UnitConstants::m;
+          std::cout << "init prop option" << std::endl;
+          
+          auto resultProp = propagator.propagate(start, *caloSurface, myCaloPropOptions);
+          if (resultProp.ok()) {
+            std::cout << "Good!" << std::endl;
+            //FM: should read back the result of the propagation? 
+            std::cout << "CaloPhi:" << phi << " " << resultProp.value().endParameters->parameters()[Acts::eBoundPhi] << std::endl;
+            // FM the line below is not correct, but it's what I'd like to do
+            //trackTip.addTrackState(result);
+          }
+          else {
+            std::cout << "Propagation failed" << std::endl;
+          }
 
           // Make track object
           EVENT::Track *track = ACTSTracking::ACTS2Marlin_track(
