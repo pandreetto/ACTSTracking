@@ -7,6 +7,7 @@
 #include <UTIL/LCTrackerConf.h>
 
 #include <Acts/Surfaces/CylinderSurface.hpp>
+#include <Acts/Surfaces/DiscSurface.hpp>
 #include <Acts/Definitions/Algebra.hpp>
 #include <Acts/EventData/ParticleHypothesis.hpp>
 
@@ -373,6 +374,14 @@ EVENT::Track* ACTS2Marlin_track(
   // Create the CaloSurface
   auto caloCylinder = std::make_shared<Acts::CylinderBounds>(caloFaceR, caloFaceZ);
   auto caloSurface = Acts::Surface::makeShared<Acts::CylinderSurface>(Acts::Transform3::Identity(), caloCylinder);
+  
+  // Define the circle dimensions (circles at both ends of the cylinder)
+  Acts::Translation3 circlePosition1(0, 0, -caloFaceZ); // circle at -z end
+  Acts::Translation3 circlePosition2(0, 0, caloFaceZ);  // circle at +z end
+
+  // Create the circle surfaces
+  auto circleSurface1 = Acts::Surface::makeShared<Acts::DiscSurface>(Acts::Transform3(circlePosition1), 0. ,caloFaceR);
+  auto circleSurface2 = Acts::Surface::makeShared<Acts::DiscSurface>(Acts::Transform3(circlePosition2), 0., caloFaceR);
 
   // define start parameters - swap this out with some smart call
   double d0 = params[Acts::eBoundLoc0];
@@ -383,7 +392,6 @@ EVENT::Track* ACTS2Marlin_track(
   double time = params[Acts::eBoundTime];
 
   Acts::Vector3 pos(d0 * cos(phi), d0 * sin(phi), z0);
-
   Acts::CurvilinearTrackParameters start(Acts::VectorHelpers::makeVector4(pos, time), phi, theta, qoverp, covariance, Acts::ParticleHypothesis::pion());
 
   // Set propagator options
@@ -411,7 +419,34 @@ EVENT::Track* ACTS2Marlin_track(
     track->trackStates().push_back(trackStateAtCalo);
   }
   else {
-    std::cout << "Failed propagation!" << std::endl;
+    if (theta > M_PI/2){
+        auto resultPropP = mypropagator.propagate(start, *circleSurface1, myCaloPropOptions);
+        if (resultPropP.ok()) {
+          auto end_parametersP = resultPropP.value().endParameters;
+          const Acts::BoundMatrix& atCaloCovariance = *(end_parametersP->covariance());
+
+          EVENT::TrackState* trackStateAtCalo = ACTSTracking::ACTS2Marlin_trackState(
+            EVENT::TrackState::AtCalorimeter, end_parametersP->parameters(), atCaloCovariance, field[2] / Acts::UnitConstants::T);
+          track->trackStates().push_back(trackStateAtCalo);
+        }
+        else{
+          std::cout << "Failed propagation! " << std::endl;
+        }
+    }
+    else{
+        auto resultPropM = mypropagator.propagate(start, *circleSurface2, myCaloPropOptions);
+        if (resultPropM.ok()) {
+          auto end_parametersM = resultPropM.value().endParameters;
+          const Acts::BoundMatrix& atCaloCovariance = *(end_parametersM->covariance());
+
+          EVENT::TrackState* trackStateAtCalo = ACTSTracking::ACTS2Marlin_trackState(
+            EVENT::TrackState::AtCalorimeter, end_parametersM->parameters(), atCaloCovariance, field[2] / Acts::UnitConstants::T);
+          track->trackStates().push_back(trackStateAtCalo);
+        }
+        else{
+          std::cout << "Failed propagation!" << std::endl;
+        }      
+    }
   }
   
   std::reverse(hitsOnTrack.begin(), hitsOnTrack.end());
