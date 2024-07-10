@@ -1,6 +1,6 @@
 #pragma once
 
-#include <EVENT/TrackerHit.h>
+#include <edm4hep/TrackerHit.h>
 
 #include "Acts/Surfaces/Surface.hpp"
 
@@ -12,8 +12,8 @@ class SourceLink final {
  public:
   //! \brief Construct from geometry identifier and hit
   SourceLink(Acts::GeometryIdentifier gid, std::size_t index,
-             EVENT::TrackerHit* lciohit)
-      : m_geometryId(gid), m_index(index), m_lciohit(lciohit) {}
+             edm4hep::TrackerHit* edmhit)
+      : m_geometryId(gid), m_index(index), m_edmhit(edmhit) {}
 
   // Construct an invalid source link. Must be default constructible to
   /// satisfy SourceLinkConcept.
@@ -27,18 +27,18 @@ class SourceLink final {
   constexpr Acts::GeometryIdentifier geometryId() const { return m_geometryId; }
   /// Access the index.
   constexpr std::size_t index() const { return m_index; }
-  /// Access the LCIO hit
-  constexpr EVENT::TrackerHit* lciohit() const { return m_lciohit; }
+  /// Access the edm4hep hit
+  constexpr edm4hep::TrackerHit edm4hephit() const { return m_edm4hephit; }
 
  private:
   Acts::GeometryIdentifier m_geometryId;
   std::size_t m_index = -1;
-  EVENT::TrackerHit* m_lciohit = nullptr;
+  edm4hep::TrackerHit m_edm4hephit = nullptr;
 
   friend constexpr bool operator==(const SourceLink& lhs,
                                    const SourceLink& rhs) {
     return (lhs.m_geometryId == rhs.m_geometryId) and
-           (lhs.m_index == rhs.m_index) and (lhs.m_lciohit == rhs.m_lciohit);
+           (lhs.m_index == rhs.m_index) and (lhs.m_edmhit == rhs.m_edmhit);
   }
   friend constexpr bool operator!=(const SourceLink& lhs,
                                    const SourceLink& rhs) {

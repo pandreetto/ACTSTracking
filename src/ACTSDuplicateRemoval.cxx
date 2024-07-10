@@ -50,7 +50,10 @@ inline bool track_duplicate_compare(const edm4hep::Track& trk1, const edm4hep::T
 
 DECLARE_COMPONENT(ACTSDuplicateRemoval)
 
-ACTSDuplicateRemoval::ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {}
+ACTSDuplicateRemoval::ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+	declareProperty("InputTrackCollectionName", m_inputTrackCollection, "Name of input track collection", std::string("TruthTracks"));
+	declareProperty("OutputTrackCollection", m_outputTrackCollection, "Name of output track collection", std::string("DedupedTruthTracks"));
+}
 
 StatusCode ACTSDuplicateRemoval::initialize() {
 	info() << "Initializing ACTSDuplicateRemoval" << endmsg;
@@ -58,7 +61,11 @@ StatusCode ACTSDuplicateRemoval::initialize() {
 }
 
 void ACTSDuplicateRemoval::execute() {
-	auto inputTracks = get<edm4hep::TrackCollection>(m_inputTrackCollection);
+	auto inputTracks = evtSvc()->getCollection<edm4hep::TrackCollection>(m_inputTrackCollection);
+	if (!trackCollection) {
+		error() << "Failed to retrieve Track Collection" << endmsg;
+		return StatusCode::FAILURE;
+	}
 	auto outputTracks = new edm4hep::TrackCollection();
 
 	std::vector<edm4hep::Track> sortedInput;

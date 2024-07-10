@@ -44,7 +44,7 @@ class SeedSpacePoint {
 
   const std::optional<float> t() const
   {
-    return m_sourceLink.lciohit()->getTime();
+    return m_sourceLink.edmhit()->getTime();
   }
   // TODO missing: const std::optional<float> varianceT() const
 

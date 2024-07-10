@@ -24,8 +24,8 @@ public:
 	virtual StatusCode finalize();
 
 private:
-	Gaudi::Property<std::string> m_inputTrackCollection{this, "InputTrackCollectionName", "TruthTracks", "Name of input track collection"};
-	Gaudi::Property<std::string> m_outputTrackCollection{this, "OutputTrackCollection", "DedupedTruthTracks", "Name of output track collection"};
+	std::string m_inputTrackCollection{};
+	std::string m_outputTrackCollection{};
 };
 
 namespace ACTSTracking {
