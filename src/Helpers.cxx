@@ -402,25 +402,20 @@ EVENT::Track* ACTS2Marlin_track(
   Stepper stepper(magneticField);
   Navigator navigator(navigatorCfg);
   Propagator mypropagator(std::move(stepper), std::move(navigator));
-  auto resultProp = mypropagator.propagate(start, *caloSurface, myCaloPropOptions);
-  if (resultProp.value().endParameters.has_value()) {
-    std::cout << "Good!" << std::endl;
-    //FM: should read back the result of the propagation? 
-    std::cout << "CaloPhi:" << phi << " " << resultProp.value().endParameters->parameters()[Acts::eBoundPhi] << std::endl;
-    // FM the line below is not correct, but it's what I'd like to do
-    //trackTip.addTrackState(result);
+  auto end_parameters = mypropagator.propagate(start, *caloSurface, myCaloPropOptions).value().endParameters;
+  if (end_parameters.has_value()) {
+    std::cout << "CaloPhi:" << phi << " " << end_parameters->parameters()[Acts::eBoundPhi] << std::endl;
+    const Acts::BoundMatrix& atCaloCovariance = *(end_parameters->covariance());
+
+    EVENT::TrackState* trackStateAtCalo = ACTSTracking::ACTS2Marlin_trackState(
+        EVENT::TrackState::AtCalorimeter, end_parameters->parameters(), atCaloCovariance, field[2] / Acts::UnitConstants::T);
+    track->trackStates().push_back(trackStateAtCalo);
   }
   else {
+    std::cout << "Failed propagation!" << std::endl;
   }
+  
 
-  /*
-  auto atCalo_params = resultProp.value().endParameters->parameters();
-  auto atCalo_covariance = resultProp.value().endParameters->covariance();
-
-  EVENT::TrackState* trackStateAtCalo = ACTSTracking::ACTS2Marlin_trackState(
-        EVENT::TrackState::AtCalorimeter, atCalo_params, atCalo_covariance, field[2] / Acts::UnitConstants::T);
-  track->trackStates().push_back(trackStateAtCalo);
-*/
   std::reverse(hitsOnTrack.begin(), hitsOnTrack.end());
   std::reverse(statesOnTrack.begin(), statesOnTrack.end());
 
