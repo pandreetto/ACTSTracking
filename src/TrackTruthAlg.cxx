@@ -1,57 +1,34 @@
 #include "TrackTruthAlg.hxx"
 #include "Helpers.hxx"
 
+#include <edm4hep/MCParticle.h>
+#include <edm4hep/SimTrackerHit.h>
+#include <edm4hep/Track.h>
+#include <edm4hep/TrackerHit.h>
+
+
+
 
 //------------------------------------------------------------------------------------------------
 
 DECLARE_COMPONENT(TrackTruthAlg)
 
-TrackTruthAlg::TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm {
-	declareProperty("TrackCollection", 
-			m_inColTrack = std::string("Tracks"), 
-			"Name of reconstructed track input collection.");
-	declareProperty("MCParticleCollectionName", 
-			m_inColMCP = std::string("MCParticle"), 
-			"Name of the MCParticle input collection");
-	declareProperty("TrackerHit2SimTrackerHitRelationName", 
-			m_inColH2SH, 
-			"Name of TrackerHit to SimTrackHit relation collection");
-	declareProperty("Particle2TrackRelationName", 
-			m_outColMC2T = std::string("Particle2TrackRelationName"), 
-			"Map from MC particle to reconstructed track.")
-}
+TrackTruthAlg::TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc, {
+		KeyValue("InputTrackCollecionName", "Tracks"),
+		KeyValue("InputMCParticleCollecionName", "MCParticle"),
+		KeyValue("InputTrackerHit2SimTrackerHitRelationName", "TrackMCRelation") },
+		{ KeyValue("OutputParticle2TrackRelationName", "Particle2TrackRelationName") })	{}
 
-StatusCode TrackTruthAlg::initialize() {
-	info() << "Initializing TrackTruthAlg" << endmsg;
-	return StatusCode::SUCCESS;
-}
-
-StatusCode TrackTruthAlg::execute() {
-	// Load Collections
-	edm4hep::TrackCollection* tracks = nullptr;
-	edm4hep::MCParticleCollection mcParticles* = nullptr;
-	if (ACTSTracking::getCollection(evtSvc(), m_inColTrack, tracks).isFailure() ||
-	    ACTSTracking::getCollection(evtSvc(), m_inColMCP, mcParticles).isFailure()) {
-		return StatusCode::FAILURE;
-	}
-
+edm4hep::MCRecoParticleAssociationCollection TrackTruthAlg::operator()(
+			const edm4hep::TrackCollecion tracks,
+                        const edm4hep::MCParticleCollection mcParticles,
+                        const edm4hep::TrackerHitPlaneCollecion trackerHitRelations) {
 	// Map TrackerHits to SimTrackerHits
-	std::vector<std::map<edm4hep::TrackerHit, edm4hep::SimTrackerHit>> trackerHit2SimHits;
-	for (const std::string& name : m_inColH2SH) {
-		//Retrieve Collection
-		edm4hep::TrackerHitPlaneCollection* trackerHitRelations = nullptr;
-		if (ACTSTracking::getCollection(evtSvc(), name, trackerHitRelations).isFailure()) {
-			return StatusCode::FAILURE;
-		}
-		//Store Relations in a map
-		std::map<edm4hep::TrackerHit, edm4hep::SimTrackerHit> trackerHit2SimHit;
-		for (auto& hitRel : *trackerHitRelations) {
-			auto trackerHit = hitRel.getFrom<emd4hep::TrackerHit>();
-			auto simTrackerHit = hitRel.getTo<emd4hep::SimTrackerHit>();
-			trackerHit2SimHit[trackerHit] = simTrackerHit;
-		}
-		//Push map to vector of maps
-		trackerHit2SimHits.push_back(trackerHit2SimHit);
+	std::map<edm4hep::TrackerHit, edm4hep::SimTrackerHit> trackerHit2SimHit;
+	for (auto& hitRel : *trackerHitRelations) {
+		auto trackerHit = hitRel.getFrom<emd4hep::TrackerHit>();
+		auto simTrackerHit = hitRel.getTo<emd4hep::SimTrackerHit>();
+		trackerHit2SimHit[trackerHit] = simTrackerHit;
 	}
 
 	// Map best matches MCP to Track
@@ -98,13 +75,5 @@ StatusCode TrackTruthAlg::execute() {
 		outColMC2T.push_back(association);
 	}
 
-	put(outColMC2T, m_outColMC2T);
-	return StatusCode::SUCCESS;
+	return outColMC2T;
 }
-	
-	
-StatusCode TrackTruthAlg::finalize() {
-	info() << "Finalizing TrackTruthAlg" << endmsg;
-	return StatusCode::SUCCESS;
-}
-

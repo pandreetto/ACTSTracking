@@ -1,14 +1,27 @@
 #ifndef ACTSAlgBase_h
 #define ACTSAlgBase_h 1
 
+// ACTS
 #include <Acts/Geometry/GeometryContext.hpp>
 #include <Acts/Geometry/TrackingGeometry.hpp>
 #include <Acts/MagneticField/MagneticFieldContext.hpp>
 #include <Acts/MagneticField/MagneticFieldProvider.hpp>
 #include <Acts/Plugins/TGeo/TGeoDetectorElement.hpp>
 #include <Acts/Utilities/CalibrationContext.hpp>
-#include <GaudiAlg/GaudiAlgorithm.h>
 
+// emd4hep
+#include <edm4hep/TrackCollection.h>
+#include <edm4hep/TrackerHitPlaneCollection.h>
+
+// Gaudi
+#include <GaudiAlg/GaudiAlgorithm.h>
+#include <GaudiAlg/Transformer.h>
+#include <k4FWCore/BaseClass.h>
+
+// k4FWCore
+#include <k4WFCore/DataHandle.h>
+
+#include <tuple>
 #include "GeometryIdMappingTool.hxx"
 
 //! Base processor for ACTS tracking
@@ -20,24 +33,21 @@
  * description is already loaded. For example, via the
  * InitializeDD4hep processor.
  *
- * @author Karol Krizka
+ * @author Karol Krizka, Samuel Ferraro
  * @version $Id$
  */
-class ACTSAlgBase : public GaudiAlgorithm {
+class ACTSAlgBase : public Gaudi::Functional::MultiTransformer<std::tuple<
+		    emd4hep::TrackCollecion, 
+		    edm4hep::TrackCollecion>>(
+		    const edm4hep::TrackerHitPlaneCollecion) {
 	using DetectorElementPtr = std::shared_ptr<const Acts::TGeoDetectorElement>;
 	using DetectorStore = std::vector<DetectorElementPtr>;
 
 public:
 	ACTSAlgBase(const std::string& name, ISvcLocator* svcLoc);
-	virtual ~ACTSAlgBase();
-	
-	virtual StatusCode initialize();
-	virtual StatusCode execute();
-	virtual StatusCode finalize();
-
 private:
+	StatusCode initialize();
 	void buildDetector();
-
 	void buildBfield();
 
 protected:

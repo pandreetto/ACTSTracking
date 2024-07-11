@@ -5,7 +5,7 @@
 #include <DD4hep/DD4hepUnits.h>
 #include <DD4hep/Detector.h>
 
-#include <UTIL/LCTrackerConf.h>
+//#include <UTIL/LCTrackerConf.h>
 
 #include <Acts/Definitions/Units.hpp>
 #include <Acts/Geometry/CylinderVolumeBuilder.hpp>
@@ -26,9 +26,10 @@
 
 using namespace ACTSTracking;
 
-DECLARE_COMPONENT(ACTSAlgBase)
-
-ACTSAlgBase::ACTSAlgBase(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
+ACTSAlgBase::ACTSAlgBase(const std::string& name ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc, 
+		{ KeyValue("InputTrackerHitCollectionName", "TrackerHits") }, {
+		  KeyValue("OutputSeedCollectionName", "SeedTracks"),
+		  KeyValue("OutputTrackCollecionName", "Tracks") }) {
 	// configuration
 	decalreProperty("MatFile", m_matFile = std::string(""), "Path to the material description JSON file. Can be empty.");
 	declareProperty("TGeoFile", m_tgeoFile = std::string(""), "Path to the tracker geometry file.");
@@ -82,12 +83,8 @@ StatusCode ACTSAlgBase::initialize() {
 
 	// Initialize mapping tool
 	m_geoIDMappingTool = std::make_shared<GeometryIdMappingTool>("subdet:5,side:-2,layer:9,module:8,sensor:8");
+	return StatusCode::SUCCESS;
 }
-
-
-StatusCode ACTSAlgBase::execute() { return StatusCode::SUCCESS; }
-
-StatusCode ACTSAlgBase::finalize() { return StatusCode::SUCCESS; }
 
 void ACTSAlgBase::buildDetector() {
   // Logging

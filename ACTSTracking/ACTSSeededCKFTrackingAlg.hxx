@@ -1,8 +1,8 @@
 #ifndef ACTSSeededCKFTrackingAlg_h
 #define ACTSSeededCKFTrackingAlg_h 1
 
-#include <edm4hep/TrackerHit.h>
-#include <edm4hep/TrackerHitCollection.h>
+#include <edm4hep/TrackCollection.h>
+#include <edm4hep/TrackerHitPlaneCollection.h>
 
 #include <Acts/Definitions/Units.hpp>
 
@@ -17,11 +17,11 @@
 class ACTSSeededCKFTrackingAlg : public ACTSAlgBase {
 public:
 	ACTSSeededCKFTrackingAlg(const std::string& name, ISvcLocator* svcLoc);
-	virtual ~ACTSSeededCKFTrackingAlg();
 
-	virtual StatusCode initialize();
-        virtual StatusCode execute();
-        virtual StatusCode finalize();
+	StatusCode initialize();
+        std::tuple<emd4hep::TrackCollecion, 
+		   edm4hep::TrackCollecion> operator(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection);
+
 
 protected:
 	// Collection names for (in/out)put

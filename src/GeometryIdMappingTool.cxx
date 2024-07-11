@@ -1,6 +1,8 @@
 #include "GeometryIdMappingTool.hxx"
 
 #include <iomanip>
+#include <sstream>
+#include <iostream>
 
 using namespace ACTSTracking;
 

@@ -3,10 +3,8 @@
 #include <edm4hep/SimTrackerHit.h>
 #include <edm4hep/TrackerHit.h>
 
-#include <sstream>
 #include <string>
 #include <vector>
-#include <iostream>
 #include <unordered_map>
 
 namespace ACTSTracking {

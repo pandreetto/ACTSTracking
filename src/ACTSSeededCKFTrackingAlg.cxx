@@ -72,18 +72,11 @@ ACTSSeededCKFTrackingAlg::ACTSSeededCKFTrackingAlg(const std::string& name, ISvc
 	// CKF configuration
 	declareProperty("CKF_Chi2CutOff", m_CKF_chi2CutOff, "Maximum local chi2 contribution.");
 	declareProperty("CKF_NumMeasurementsCutOff", m_CKF_numMeasurementsCutOff, "Maximum number of associated measurements on a single surface.");
-
-	// Collections
-	declareProperty("TrackerHitCollectionNames", m_inputTrackerHitCollections, "Name of the TrackerHit input collections.");
-	declareProperty("SeedCollectionName", m_outputSeedCollection = "SeedTracks", "Name of seed output collection.");
-	declareProperty("TrackCollectionName", m_outputTrackCollection = "Tracks", "Name of track output collection.")
 }
-
-ACTSSeededCKFTrackingAlg::~ACTSSeddedCKFTrackingAlg() {}
 
 StatusCode ACTSSeededCKFTrackingAlg::initialize() {
 	info() << "Initializing ACTSSeededCKFTrackingAlg" << endmsg;
-	ACTSProcBase::init();
+	ACTSAlgBase::initialize();
 	// Reset counters
 	m_fitFails = 0;
 
@@ -118,27 +111,17 @@ StatusCode ACTSSeededCKFTrackingAlg::initialize() {
 	return StatusCode::SUCCESS;
 }
 
-StatusCode ACTSSeededCKFTrackingAlg::execute() {
-	// Prepare the output
-	// Make the output track collection
-	edm4hep::TrackCollection* seedCollection = new edm4hep::TrackCollection();
-	edm4hep::TrackCollection* trackCollection = new edm4hep::TrackCollection();
-
+std::tuple<emd4hep::TrackCollecion,
+           edm4hep::TrackCollecion> ACTSSeededCKFTrackingAlg::operator(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection) {
 	// Prepare input hits in ACTS format
 
 	// Loop over each hit collections and get a single vector with hits
 	// from all of the subdetectors. Also include the Acts GeoId in
 	// the vector. It will be important for the sort to speed up the
 	// population of the final SourceLink multiset.
-	std::vector<std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHit*>> sortedHits;
-	for (const std::string &collection : m_inputTrackerHitCollections) {
-		// Get the collection of tracker hits
-		edm4hep::TrackerHitCollection trackerHitCollection = nullptr;
-		if (ACTSTracking::getCollection(evtSvc(), collection, trackerHitCollection).isFailure()) { continue; }
-
-		for (auto& hit : *trackerHitCollection) {
-			sortedHits.push_back(std::make_pair(geoIDMappingTool()->getGeometryID(hit), &hit));
-		}
+	std::vector<std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane*>> sortedHits;
+	for (auto& hit : *trackerHitCollection) {
+		sortedHits.push_back(std::make_pair(geoIDMappingTool()->getGeometryID(hit), &hit));
 	}
 
 	// Sort by GeoID
@@ -504,15 +487,8 @@ StatusCode ACTSSeededCKFTrackingAlg::execute() {
 			}
 		}
 	}
-
-	// Save the output seed collection
-	put(seedCollection, m_outputSeedCollection);
-
-	// Save the output track collection
-	put(trackCollection, m_outputTrackCollection);
+	
+	return std::make_tuple(std::move(seedCollection), std::move(trackCollection));
 }
 
-StatusCode ACTSSeededCKFTrackingAlg::finalize() {
-	info() << "Finalizing ACTSSeededCKFTrackingAlg" << endmsg;
-	return StatusCode::SUCCESS;
 }

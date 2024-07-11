@@ -1,10 +1,6 @@
 #include "ACTSDuplicateRemoval.hxx"
 
-#include <edm4hep/TrackCollection.h>
-#include <edm4hep/Track.h>
 #include <edm4hep/TrackerHit.h>
-#include <GaudiKernel/MsgStream.h>
-#include <GaudiKernel/SmarkIF.h>
 
 #include <algorithm>
 
@@ -50,54 +46,38 @@ inline bool track_duplicate_compare(const edm4hep::Track& trk1, const edm4hep::T
 
 DECLARE_COMPONENT(ACTSDuplicateRemoval)
 
-ACTSDuplicateRemoval::ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc) : GaudiAlgorithm(name, svcLoc) {
-	declareProperty("InputTrackCollectionName", m_inputTrackCollection, "Name of input track collection", std::string("TruthTracks"));
-	declareProperty("OutputTrackCollection", m_outputTrackCollection, "Name of output track collection", std::string("DedupedTruthTracks"));
-}
+ACTSDuplicateRemoval::ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc) : Transformer(name, svcLoc,
+				KeyValue("InputCollection", "TruthTracks"),
+				KeyValue("OutputCollection", "DedupedTruthTracks")) {}
 
-StatusCode ACTSDuplicateRemoval::initialize() {
-	info() << "Initializing ACTSDuplicateRemoval" << endmsg;
-	return StatusCode::SUCCESS;
-}
-
-void ACTSDuplicateRemoval::execute() {
-	const edm4hep::TrackCollection trackCollecion = nullptr;
-	if (ACTSTracking::getCollecion(evtSvc(), m_inputTrackCollection, trackCollection).isFailure()) { return StatusCode::FAILURE; }
+edm4hep::TrackCollecion ACTSDuplicateRemoval::operator()(const edm4hep::TrackCollection& trackCollection) const{
+	// Make output collecion
 	auto outputTracks = new edm4hep::TrackCollection();
 
+	// Insertion sort input tracks
 	std::vector<edm4hep::Track> sortedInput;
 	for (const auto& track : *inputTracks) {
 		auto insertion_point = std::upper_bound(sortedInput.begin(), sortedInput.end(), track, ACTSTracking::track_duplicate_compare);
 		sortedInput.insert(insertion_point, track);
 	}
-
-	std::vector<edm4hep::Track> finalTracks;
+	
+	// Loop through all inputs and search for nearby equals
+	// Remove if they are too similar
 	for (const auto& track : sortedInput) {
 		bool foundAnEqual = false;
-		for (int i = (finalTracks.size() >= 10) ? finalTracks.size() - 10: 0; i < finalTracks.size(); ++i) {
-			const auto& otherTrack = finalTracks[i];
+		for (int i = (outputTracks.size() >= 10) ? outputTracks.size() - 10: 0; i < outputTracks.size(); ++i) {
+			const auto& otherTrack = outputTracks[i];
 			if (!ACTSTracking::tracks_equal(track, otherTrack)) continue;
 			foundAnEqual = true;
 			if (ACTSTracking::track_quality_compare(track, otherTrack)) {
-				finalTracks[i] = track;
+				outputTracks[i] = track;
 				break;
 			}
 		}
 		if (!foundAnEqual) {
-			finalTracks.push_back(track);
+			outputTracks.push_back(track);
 		}
 	}
 
-	for (const auto& track : finalTracks) {
-		outputTracks->push_back(track);
-	}
-
-	put(outputTracks, m_outputTrackCollection);
-
-	return StatusCode::SUCCESS;
-}
-
-StatusCode ACTSDuplicateRemoval::finalize() {
-	info() << "Finalizeing ACTSDuplicateRemoval" << endmsg;
-	return StatusCode::SUCCESS;
+	return outputTracks;
 }

@@ -1,18 +1,21 @@
 #ifndef TrackTruthAlg_h
 #define TrackTruthAlg_h 1
 
-//#include <edm4hep.h>
-#include <edm4hep/MCParticle.h>
-#include <edm4hep/SimTrackerHit.h>
-#include <edm4hep/Track.h>
-#include <edm4hep/TrackerHit.h>
+// edm4hep
+#include <edm4hep/TrackCollecion.h>
+#include <edm4hep/MCParticleCollecion.h>
+#include <edm4hep/TrackerHitPlaneCollecion.h>
+#include <edm4hep/MCRecoParticleAssociationCollecion.h>
 
-#include <GaudiAlg/GaudiAlgorithm>
-#include <GaudiKernel/ServiceHandle.h>
-#include <GaudiKernel/ISvcLocator.h>
-#include <GaudiKernel/ToolHandle.h>
-#include <k4FWCore/DataHandle.h>
+// Gaudi
+#include <GaudiAlg/GaudiAlgorithm.h>
+#include <GaudiAlg/MultiTransformer.h>
+#include <k4FWCore/BaseClass.h>
 
+// k4FWCore
+#include <k4WFCore/DataHandle.h>
+
+// std
 #include <string>
 #include <vector>
 
@@ -23,27 +26,21 @@
  * @param  TrackCollection                Names of Track input collections
  * @param  Track2HitRelationName          Name of output collection for track to
  * hit relations
+ *
+ * @author Samuel Ferraro, Unknown
  */
 
-class TrackTruthAlg : public GaudiAlgorithm {
+class TrackTruthAlg : public Gaudi::Functional::MultiTransformer<edm4hep::MCRecoParticleAssociationCollecion>(
+			const edm4hep::TrackCollecion, 
+			const edm4hep::MCParticleCollection, 
+			const edm4hep::TrackerHitPlaneCollecion) {
 public:
 	TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc);
-	virtual ~TrackTruthAlg();
 
-	virtual StatusCode initialize();
-        virtual StatusCode execute();
-        virtual StatusCode finalize();
-
-protected:
-	/** Input collection names.
-	*/
-	std::string m_inColTrack;
-	std::string m_inColMCP;
-	std::vector<std::string> m_inColH2SH;
-
-	/** Output collection names.
-	*/
-	std::string m_outColMC2T;
+	edm4hep::MCRecoParticleAssociationCollecion operator()(
+			const edm4hep::TrackCollecion tracks, 
+                        const edm4hep::MCParticleCollection mcParticles,
+                        const edm4hep::TrackerHitPlaneCollecion trackerHitRelations);
 };
 
 #endif

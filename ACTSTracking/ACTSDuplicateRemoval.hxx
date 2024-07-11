@@ -1,31 +1,31 @@
 #ifndef ACTSDuplicateRemoval_h
 #define ACTSDuplicateRemoval_h 1
 
-#include <edm4hep/Track.h>
+// edm4hep
 #include <edm4hep/TrackCollection.h>
+#include <edm4hep/Track.h>
 
+// Gaudi
 #include <GaudiAlg/GaudiAlgorithm.h>
+#include <GaudiAlg/Transformer.h>
+#include <k4FWCore/BaseClass.h>
+
+// k4FWCore
+#include <k4WFCore/DataHandle.h>
 
 //! \brief Remove track duplicates
 /**
  * If tracks share more than 50% of hits, then
  * remove the best one.
  *
- * @author Karol Krizka
+ * @author Karol Krizka, Samuel Ferraro
  * @version $Id$
  */
-class ACTSDuplicateRemoval : public GaudiAlgorithm {
+class ACTSDuplicateRemoval : public Gaudi::Functional::Transformer <edm4hep::TrackCollection(const edm4hep::TrackCollection&), BaseClass_t> {
 public:
 	ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc);
-	virtual ~ACTSDuplicateRemoval();
 
-	virtual StatusCode initialize();
-	virtual StatusCode execute();
-	virtual StatusCode finalize();
-
-private:
-	std::string m_inputTrackCollection{};
-	std::string m_outputTrackCollection{};
+	edm4hep::TrackCollection operator()(const edm4hep::TrackCollection& trackCollecion) const override;
 };
 
 namespace ACTSTracking {
@@ -39,7 +39,7 @@ namespace ACTSTracking {
  */
 	bool track_duplicate_compare(const edm4hep::Track& trk1, const edm4hep::Track& trk2);
 	bool tracks_quality_compart(const edm4hep::Track& trk1, edm4hep::Track& trk2);
-	bol tracks_equal(const edm4hep::Track& trk1, edm4hep::Track& trk2);
+	bool tracks_equal(const edm4hep::Track& trk1, edm4hep::Track& trk2);
 }  // namespace ACTSTracking
 
 #endif
