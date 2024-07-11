@@ -40,7 +40,7 @@ public:
 	edm4hep::MCRecoParticleAssociationCollecion operator()(
 			const edm4hep::TrackCollecion tracks, 
                         const edm4hep::MCParticleCollection mcParticles,
-                        const edm4hep::TrackerHitPlaneCollecion trackerHitRelations);
+                        const edm4hep::TrackerHitPlaneCollecion trackerHitRelations) const;
 };
 
 #endif

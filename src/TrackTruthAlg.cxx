@@ -22,7 +22,7 @@ TrackTruthAlg::TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc) : Mul
 edm4hep::MCRecoParticleAssociationCollection TrackTruthAlg::operator()(
 			const edm4hep::TrackCollecion tracks,
                         const edm4hep::MCParticleCollection mcParticles,
-                        const edm4hep::TrackerHitPlaneCollecion trackerHitRelations) {
+                        const edm4hep::TrackerHitPlaneCollecion trackerHitRelations) const{
 	// Map TrackerHits to SimTrackerHits
 	std::map<edm4hep::TrackerHit, edm4hep::SimTrackerHit> trackerHit2SimHit;
 	for (auto& hitRel : *trackerHitRelations) {

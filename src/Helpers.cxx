@@ -217,23 +217,5 @@ Acts::ParticleHypothesis convertParticle(const edm4hep::MCParticle mcParticle)
   return Acts::ParticleHypothesis { pdg, mass, charge_type };
 }
 
-template <typename T>
-StatusCode getCollection(ISvcLocator* svcLoc, const std::string& collectionName const T*& collection) {
-	ServiceHandle<IDataProviderSvc> evtSvc("EventDataSvc", "Helper");
-	if (!evtSvc.isValid()) {
-		MsgStream log(svcLoc->msgSvc(), "Helper");
-		log << MSG::ERROR << "Unable to locate EventDataSvc" << endmsg;
-		return StatusCode::FAILURE;
-	}
-
-	SmartDataPtr<T> col(evtSvc, collectionName);
-	if (!col) {
-		MsgStream log(svcLoc->msgSvc(), "Helper");
-		log << MSG::ERROR << "Failed to retrieve collection: " << collectionName << endmsg;
-		return StatusCode::FAILURE;
-	}
-	collection = col;
-	return StatusCode::SUCCESS;
-}
 
 }  // namespace ACTSTracking

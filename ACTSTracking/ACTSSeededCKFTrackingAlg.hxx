@@ -20,7 +20,7 @@ public:
 
 	StatusCode initialize();
         std::tuple<emd4hep::TrackCollecion, 
-		   edm4hep::TrackCollecion> operator(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection);
+		   edm4hep::TrackCollecion> operator(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection) const;
 
 
 protected:

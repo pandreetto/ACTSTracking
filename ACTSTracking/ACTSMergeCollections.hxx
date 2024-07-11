@@ -1,0 +1,44 @@
+#ifndef ACTSMergeCollections_h
+#define ACTSMergeCollections_h 1
+
+// edm4hep
+#include <edm4hep/TrackerHitPlaneCollection.h>
+#include <edm4hep/MCRecoParticleAssociationCollection.h>
+
+// Gaudi
+#include <GaudiAlg/GaudiAlgorithm.h>
+#include <GaudiAlg/MultiTransformer.h>
+#include <k4FWCore/BaseClass.h>
+
+// k4FWCore
+#include <k4WFCore/DataHandle.h>
+
+//! \brief Combine 6 collections into 1
+/**
+ * @author Samuel Ferraro
+ * @version $Id$
+ */
+template<typename CollectionType>
+class ACTSMergeCollection : public Gaudi::Functional::MultiTransformer <CollectionType>(
+		const CollectionType,
+		const CollectionType,
+		const CollectionType,
+		const CollectionType,
+		const CollectionType,
+		const CollectionType), BaseClass_t> {
+public:
+	ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc);
+
+	CollectionType operator()(
+		const CollectionType col1,
+		const CollectionType col2,
+                const CollectionType col3,
+                const CollectionType col4,
+                const CollectionType col5,
+                const CollectionType col6) const override;
+};
+
+extern template class ACTSMergeCollections<TrackerHitPlaneCollection>;
+extern template class ACTSMergeCollections<MCRecoParticleAssociationCollection>;
+
+#endif // ACTSMergeCollections_h

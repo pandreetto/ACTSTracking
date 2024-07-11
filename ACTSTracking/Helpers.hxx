@@ -78,9 +78,6 @@ edm4hep::TrackState ACTS2edm4hep_trackState(int location,
                                           const Acts::BoundMatrix& cov,
                                           double Bz);
 
-template <typename T>
-StatusCode getCollection(ISvcLocator* svcLoc, const std::string& collectionName const T*& collection) {}
-
 //! Get particle hypothesis in ACTS format 
 /**
  * \param MCParticle

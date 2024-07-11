@@ -21,7 +21,7 @@
  * @author Karol Krizka, Samuel Ferraro
  * @version $Id$
  */
-class ACTSDuplicateRemoval : public Gaudi::Functional::Transformer <edm4hep::TrackCollection(const edm4hep::TrackCollection&), BaseClass_t> {
+class ACTSDuplicateRemoval : public Gaudi::Functional::Transformer <edm4hep::TrackCollection>(const edm4hep::TrackCollection&), BaseClass_t> {
 public:
 	ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc);
 
