@@ -1,3 +1,6 @@
+# v2.0.0
+    - Updated all to Gaudi/key4hep
+
 # v1.1.0
 	- Fix paths for running ACTSTracking outside of a release.
 	- Remove dependance on custom ACTS by configuring layer detection envelope in ACTSProcBase.

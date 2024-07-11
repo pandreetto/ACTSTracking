@@ -5,7 +5,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.15 FATAL_ERROR)
 ########################################################
 
 # project name
-PROJECT( ACTSTracking VERSION 1.2.0 )
+PROJECT( ACTSTracking VERSION 2.0.0 )
 
 ### DEPENDENCIES ############################################################
 FIND_PACKAGE( Gaudi REQUIRED )
