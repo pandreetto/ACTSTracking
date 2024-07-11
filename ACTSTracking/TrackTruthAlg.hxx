@@ -30,10 +30,10 @@
  * @author Samuel Ferraro, Unknown
  */
 
-class TrackTruthAlg : public Gaudi::Functional::MultiTransformer<edm4hep::MCRecoParticleAssociationCollecion>(
+class TrackTruthAlg : public Gaudi::Functional::MultiTransformer<edm4hep::MCRecoParticleAssociationCollecion(
 			const edm4hep::TrackCollecion, 
 			const edm4hep::MCParticleCollection, 
-			const edm4hep::TrackerHitPlaneCollecion) {
+			const edm4hep::TrackerHitPlaneCollecion), BaseClass_t> {
 public:
 	TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc);
 

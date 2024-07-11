@@ -19,7 +19,7 @@
  * @version $Id$
  */
 template<typename CollectionType>
-class ACTSMergeCollection : public Gaudi::Functional::MultiTransformer <CollectionType>(
+class ACTSMergeCollection : public Gaudi::Functional::MultiTransformer <CollectionType(
 		const CollectionType,
 		const CollectionType,
 		const CollectionType,

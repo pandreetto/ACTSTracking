@@ -38,8 +38,8 @@
  */
 class ACTSAlgBase : public Gaudi::Functional::MultiTransformer<std::tuple<
 		    emd4hep::TrackCollecion, 
-		    edm4hep::TrackCollecion>>(
-		    const edm4hep::TrackerHitPlaneCollecion) {
+		    edm4hep::TrackCollecion>(
+		    const edm4hep::TrackerHitPlaneCollecion), BaseClass_t> {
 	using DetectorElementPtr = std::shared_ptr<const Acts::TGeoDetectorElement>;
 	using DetectorStore = std::vector<DetectorElementPtr>;
 

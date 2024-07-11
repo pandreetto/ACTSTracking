@@ -1,29 +1,19 @@
 ########################################################
 # cmake file for building Marlin ACTSTracking Package
-# @author Karol Krizka
+# @author Karol Krizka, Samuel Ferraro
 CMAKE_MINIMUM_REQUIRED(VERSION 3.15 FATAL_ERROR)
 ########################################################
 
 # project name
-PROJECT( ACTSTracking )
-
-# project version
-SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 1 )
-SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
+PROJECT( ACTSTracking VERSION 1.2.0 )
 
 ### DEPENDENCIES ############################################################
-
-FIND_PACKAGE( ILCUTIL REQUIRED COMPONENTS ILCSOFT_CMAKE_MODULES )
-
-FIND_PACKAGE( Marlin 1.0 REQUIRED ) # minimum required Marlin version
-
+FIND_PACKAGE( Gaudi REQUIRED )
+FIND_PACKAGE( EDM4HEP REQUIRED )
 FIND_PACKAGE( DD4hep REQUIRED COMPONENTS DDCore )
-
-FIND_PACKAGE( ROOT REQUIRED)
-
+FIND_PACKAGE( ROOT REQUIRED )
 FIND_PACKAGE( Acts REQUIRED COMPONENTS Core PluginJson PluginTGeo )
-
+FIND_PACKAGE( k4FWCore REQUIRED )
 INCLUDE(GNUInstallDirs)
 
 ### DOCUMENTATION ###########################################################
@@ -43,24 +33,27 @@ ADD_SUBDIRECTORY(example)
 # sources
 CONFIGURE_FILE(src/config.h.in config.h)
 ADD_LIBRARY(ACTSTracking SHARED
-  ./src/ACTSProcBase.cxx
-  ./src/ACTSTruthTrackingProc.cxx
-  ./src/ACTSTruthCKFTrackingProc.cxx
-  ./src/ACTSSeededCKFTrackingProc.cxx
-  ./src/ACTSDuplicateRemoval.cxx
-  ./src/TrackTruthProc.cxx
-  ./src/GeometryIdSelector.cxx
-  ./src/GeometryIdMappingTool.cxx
-  ./src/Helpers.cxx
+	./src/ACTSAlgBase.cxx
+	./src/ACTSSeededCKFTrackingAlg.cxx
+	./src/ACTSDuplicateRemoval.cxx
+	./src/TrackTruthAlg.cxx
+	./src/GeometryIdSelector.cxx
+	./src/GeometryIdMappingTool.cxx
+	./src/Helpers.cxx
   )
 TARGET_INCLUDE_DIRECTORIES(ACTSTracking
   PRIVATE
     ./ACTSTracking
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${Marlin_INCLUDE_DIRS}
+    ${Gaudi_INCLUDE_DIRS}
     ${ROOT_INCLUDE_DIRS})
 TARGET_LINK_LIBRARIES(ACTSTracking
-  ${ROOT_LIBRARIES} DD4hep::DDCore
+  ${ROOT_LIBRARIES} 
+  DD4hep::DDCore
+  Gaudi::GaudiKernel
+  Gaudi::GaudiAlg
+  EMD4HEP::edm4hep
+  k4FWCore::k4FWCore
   ActsCore ActsPluginTGeo ActsPluginJson)
 
 INSTALL( TARGETS ACTSTracking DESTINATION lib )
