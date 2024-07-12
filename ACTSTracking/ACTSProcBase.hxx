@@ -63,6 +63,9 @@ class ACTSProcBase : public marlin::Processor {
   //! Path to tracker geometry file
   std::string _tgeoFile{};
 
+  //! Path to tracker geometry configuration
+  std::string _tgeoJson{};
+
   std::shared_ptr<ACTSTracking::GeometryIdMappingTool> geoIDMappingTool() const;
 
   const Acts::MagneticFieldContext& magneticFieldContext() const;

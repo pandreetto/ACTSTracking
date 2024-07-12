@@ -33,6 +33,8 @@ ACTSProcBase::ACTSProcBase(const std::string& procname) : Processor(procname) {
       _matFile, std::string(""));
   registerProcessorParameter("TGeoFile", "Path to the tracker geometry file.",
                              _tgeoFile, std::string(""));
+  registerProcessorParameter("TGeoJson", "Path to the tracker geometry configuration.",
+                             _tgeoJson, std::string(""));
 }
 
 std::shared_ptr<GeometryIdMappingTool> ACTSProcBase::geoIDMappingTool() const {
