@@ -19,7 +19,7 @@ TrackTruthAlg::TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc) : Mul
 		KeyValue("InputTrackerHit2SimTrackerHitRelationName", "TrackMCRelation") },
 		{ KeyValue("OutputParticle2TrackRelationName", "Particle2TrackRelationName") })	{}
 
-edm4hep::MCRecoParticleAssociationCollection TrackTruthAlg::operator()(
+edm4hep::MCRecoTrackParticleAssociationCollection TrackTruthAlg::operator()(
 			const edm4hep::TrackCollecion tracks,
                         const edm4hep::MCParticleCollection mcParticles,
                         const edm4hep::TrackerHitPlaneCollecion trackerHitRelations) const{
@@ -66,13 +66,12 @@ edm4hep::MCRecoParticleAssociationCollection TrackTruthAlg::operator()(
 	}
 
 	// Save the best matches
-	edm4hep::MCRecoParticleAssociationCollection outColMC2T =  std::make_unique<edm4hep::MCRecoParticleAssociationCollection>();
+	edm4hep::MCRecoTrackParticleAssociationCollection outColMC2T =  std::make_unique<edm4hep::MCRecoTrackParticleAssociationCollection>();
 	for (const auto& [mcParticle, track] : mcBestMatchTrack) {
-		edm4hep::MutableMCRecoParticleAssociation association;
+		edm4hep::MutableMCRecoTrackParticleAssociation association = outColMC2T.create();
 		association.setRec(track);
 		association.setSim(mcParticle);
 		association.setWeight(mcBestMatchFrac[mcParticle]);
-		outColMC2T.push_back(association);
 	}
 
 	return outColMC2T;

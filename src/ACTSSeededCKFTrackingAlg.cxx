@@ -47,8 +47,7 @@ ACTSSeededCKFTrackingAlg::ACTSSeededCKFTrackingAlg(const std::string& name, ISvc
 	declareProperty("InitialTrackError_Pos", m_initialTrackError_pos = 10_um, "Track error estimate, local position (mm).");
 
 	// Seeding configurations
-	declareProperty("SeedingLayers", m_seedingLayers = {"*", "*"}, 
-			"Layers to use for seeding in format \"VolID LayID\", one per line. ID's are ACTS GeometryID's. * can be used to wildcard.");
+	declareProperty("SeedingLayers", m_seedingLayers, "Layers to use for seeding in vector.");
 	declareProperty("SeedFinding_RMax", m_seedFinding_rMax, "Maximum radius of hits to consider.");
 	declareProperty("SeedFinding_DeltaRMin", m_seedFinding_deltaRMin, "Minimum dR between hits in a seed.");
 	declareProperty("SeedFinding_DeltaRMax", m_seedFinding_deltaRMax, "Maximum dR between hits in a seed.");

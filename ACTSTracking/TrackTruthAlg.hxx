@@ -5,7 +5,7 @@
 #include <edm4hep/TrackCollecion.h>
 #include <edm4hep/MCParticleCollecion.h>
 #include <edm4hep/TrackerHitPlaneCollecion.h>
-#include <edm4hep/MCRecoParticleAssociationCollecion.h>
+#include <edm4hep/MCRecoTrackParticleAssociationCollecion.h>
 
 // Gaudi
 #include <GaudiAlg/GaudiAlgorithm.h>
@@ -30,7 +30,7 @@
  * @author Samuel Ferraro, Unknown
  */
 
-class TrackTruthAlg : public Gaudi::Functional::MultiTransformer<edm4hep::MCRecoParticleAssociationCollecion(
+class TrackTruthAlg : public Gaudi::Functional::MultiTransformer<edm4hep::MCRecoTrackParticleAssociationCollecion(
 			const edm4hep::TrackCollecion, 
 			const edm4hep::MCParticleCollection, 
 			const edm4hep::TrackerHitPlaneCollecion), BaseClass_t> {
