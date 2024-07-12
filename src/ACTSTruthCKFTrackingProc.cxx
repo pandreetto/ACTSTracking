@@ -73,6 +73,15 @@ ACTSTruthCKFTrackingProc::ACTSTruthCKFTrackingProc()
   registerOutputCollection(LCIO::TRACK, "TrackCollectionName",
                            "Name of track output collection.",
                            _outputTrackCollection, std::string("TruthTracks"));
+
+  // Extrapolation to calo surface
+  registerProcessorParameter("CaloFace_Radius",
+                             "ECAL Inner Radius (mm).",
+                             _caloFaceR, _caloFaceR);
+  
+  registerProcessorParameter("CaloFace_Z",
+                             "ECAL half length (mm).",
+                             _caloFaceZ, _caloFaceZ);
 }
 
 void ACTSTruthCKFTrackingProc::init() {
@@ -317,7 +326,8 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
       {
         std::cout << trackTip.chi2() << std::endl;
         EVENT::Track* track = ACTSTracking::ACTS2Marlin_track(
-            trackTip, magneticField(), magCache);
+            trackTip, magneticField(), magCache,
+            _caloFaceR, _caloFaceZ, geometryContext(), magneticFieldContext(), trackingGeometry());
         trackCollection->addElement(track);
       }
     } else {
@@ -326,68 +336,6 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
     }
 
   }
-/*
-  auto t1 = std::chrono::high_resolution_clock::now();
-  TrackFinderResultContainer results =
-      trackFinder.findTracks(sourceLinks, seeds, ckfOptions);
-  auto t2 = std::chrono::high_resolution_clock::now();
-  std::cout
-      << "Tracking finding: "
-      << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
-      << " ms" << std::endl;
-
-  for (TrackFinderResult& result : results) {
-    if (result.ok()) {
-      const Acts::CombinatorialKalmanFilterResult<ACTSTracking::SourceLink>&
-          fitOutput = result.value();
-      for (const size_t& trackTip : fitOutput.lastMeasurementIndices) {
-        if (fitOutput.fittedParameters.count(trackTip) == 0) {
-          streamlog_out(WARNING)
-              << "No fitted track parameters for trajectory with entry index = "
-              << trackTip << std::endl;
-          continue;
-        }
-
-        //
-        // Helpful debug output
-        Acts::MultiTrajectoryHelpers::TrajectoryState trajState =
-            Acts::MultiTrajectoryHelpers::trajectoryState(
-                fitOutput.fittedStates, trackTip);
-        streamlog_out(DEBUG) << "Trajectory Summary" << std::endl;
-        streamlog_out(DEBUG)
-            << "\tchi2Sum       " << trajState.chi2Sum << std::endl;
-        streamlog_out(DEBUG)
-            << "\tNDF           " << trajState.NDF << std::endl;
-        streamlog_out(DEBUG)
-            << "\tnHoles        " << trajState.nHoles << std::endl;
-        streamlog_out(DEBUG)
-            << "\tnMeasurements " << trajState.nMeasurements << std::endl;
-        streamlog_out(DEBUG)
-            << "\tnOutliers     " << trajState.nOutliers << std::endl;
-        streamlog_out(DEBUG)
-            << "\tnStates       " << trajState.nStates << std::endl;
-
-        const Acts::BoundTrackParameters& params =
-            fitOutput.fittedParameters.at(trackTip);
-        streamlog_out(DEBUG) << "Fitted Paramemeters" << std::endl
-                             << params << std::endl;
-
-        //
-        // Make track object
-        EVENT::Track* track = ACTSTracking::ACTS2Marlin_track(
-            fitOutput, trackTip, magneticField(), magCache);
-
-        //
-        // Save results
-        trackCollection->addElement(track);
-      }
-    } else {
-      streamlog_out(WARNING)
-          << "Track fit error: " << result.error() << std::endl;
-      _fitFails++;
-    }
-  }
-*/
 
   // Save the output track collection
   evt->addCollection(trackCollection, _outputTrackCollection);

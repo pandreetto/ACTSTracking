@@ -69,6 +69,15 @@ ACTSTruthTrackingProc::ACTSTruthTrackingProc()
   registerOutputCollection(LCIO::TRACK, "TrackCollectionName",
                            "Name of track output collection.",
                            _outputTrackCollection, std::string("TruthTracks"));
+
+  // Extrapolation to calo surface
+  registerProcessorParameter("CaloFace_Radius",
+                             "ECAL Inner Radius (mm).",
+                             _caloFaceR, _caloFaceR);
+  
+  registerProcessorParameter("CaloFace_Z",
+                             "ECAL half length (mm).",
+                             _caloFaceZ, _caloFaceZ);
 }
 
 void ACTSTruthTrackingProc::init() {
@@ -339,57 +348,12 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
 
     if (result.ok()) {
       const auto& fitOutput = result.value();
-/*
-      if (fitOutput.fittedParameters) {
-        // Make the track object and relations object
-        IMPL::LCRelationImpl* relationTrack = new IMPL::LCRelationImpl;
 
-        //
-        // Helpful debug output
-        Acts::MultiTrajectoryHelpers::TrajectoryState trajState =
-            Acts::MultiTrajectoryHelpers::trajectoryState(
-                fitOutput.fittedStates, fitOutput.lastMeasurementIndex);
-        streamlog_out(DEBUG) << "Trajectory Summary" << std::endl;
-        streamlog_out(DEBUG)
-            << "\tchi2Sum       " << trajState.chi2Sum << std::endl;
-        streamlog_out(DEBUG)
-            << "\tNDF           " << trajState.NDF << std::endl;
-        streamlog_out(DEBUG)
-            << "\tnHoles        " << trajState.nHoles << std::endl;
-        streamlog_out(DEBUG)
-            << "\tnMeasurements " << trajState.nMeasurements << std::endl;
-        streamlog_out(DEBUG)
-            << "\tnOutliers     " << trajState.nOutliers << std::endl;
-        streamlog_out(DEBUG)
-            << "\tnStates       " << trajState.nStates << std::endl;
-
-        const Acts::BoundTrackParameters& params =
-            fitOutput.fittedParameters.value();
-        streamlog_out(DEBUG) << "Fitted Paramemeters" << std::endl
-                             << params << std::endl;
-
-        // Make track object
-        EVENT::Track* track = ACTSTracking::ACTS2Marlin_track(
-            fitOutput, magneticField(), magCache);
-
-        // Save results
-        trackCollection->addElement(track);
-
-        // Make the particle to track link
-        relationTrack->setFrom(track);
-        relationTrack->setTo(mcParticle);
-        relationTrack->setWeight(1.0);
-        trackRelationCollection->addElement(relationTrack);
-      } else {
-        streamlog_out(WARNING)
-            << "No fitted paramemeters for track" << std::endl;
-        _fitFails++;
-      }
-*/
       if (fitOutput.hasReferenceSurface())
       {
         EVENT::Track* track = ACTSTracking::ACTS2Marlin_track(
-            fitOutput, magneticField(), magCache);
+            fitOutput, magneticField(), magCache,
+            _caloFaceR, _caloFaceZ, geometryContext(), magneticFieldContext(), trackingGeometry());
         trackCollection->addElement(track);
 
         IMPL::LCRelationImpl* relationTrack = new IMPL::LCRelationImpl;
