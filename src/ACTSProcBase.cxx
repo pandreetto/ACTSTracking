@@ -237,7 +237,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.parseRanges.push_back({Acts::binR, {0, 120}});
 
       // Fill the parsing restrictions in z
-      lConfig.parseRanges.push_back({Acts::binZ, {-285, -70}});
+      lConfig.parseRanges.push_back({Acts::binZ, {-305, -140}});
 
       // Fill the layer splitting parameters in z
       lConfig.splitConfigs.push_back({Acts::binZ, 1});
@@ -262,7 +262,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.splitConfigs.push_back({Acts::binR, 0.1});
 
       // Fill the parsing restrictions in z
-      lConfig.parseRanges.push_back({Acts::binZ, {-70, 70}});
+      lConfig.parseRanges.push_back({Acts::binZ, {-140, 140}});
 
       // Save
       layerBuilderConfig.layerConfigurations[1].push_back(lConfig);
@@ -281,7 +281,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.parseRanges.push_back({Acts::binR, {0, 120}});
 
       // Fill the parsing restrictions in z
-      lConfig.parseRanges.push_back({Acts::binZ, {70, 285}});
+      lConfig.parseRanges.push_back({Acts::binZ, {140, 305}});
 
       // Fill the layer splitting parameters in z
       lConfig.splitConfigs.push_back({Acts::binZ, 1});
@@ -472,7 +472,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.localAxes = "XYZ";
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, {570, 1550}});
+      lConfig.parseRanges.push_back({Acts::binR, {570, 1750}});
 
       // Fill the parsing restrictions in z
       lConfig.parseRanges.push_back({Acts::binZ, {-2210, -1300}});
@@ -492,7 +492,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.localAxes = "XYZ";
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, {600, 1550}});
+      lConfig.parseRanges.push_back({Acts::binR, {600, 1750}});
 
       // Fill the layer splitting parameters in r
       lConfig.splitConfigs.push_back({Acts::binR, 10});
@@ -512,7 +512,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.localAxes = "XYZ";
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, {570, 1550}});
+      lConfig.parseRanges.push_back({Acts::binR, {570, 1750}});
 
       // Fill the parsing restrictions in z
       lConfig.parseRanges.push_back({Acts::binZ, {1300, 2210}});
