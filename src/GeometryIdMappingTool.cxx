@@ -127,17 +127,7 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
       layer_id = 2 * (layerID) + 2;
       break;
     case VertexBarrel:
-      //layer_id = 2 * (layerID + 1);
-      switch (layerID) {
-        case 0:
-          layer_id = 2;
-        case 2:
-          layer_id = 6;
-        case 4:
-          layer_id = 8;
-        case 6:
-          layer_id = 10;
-      }
+      layer_id = layerID + 2;
       break;
     case InnerTrackerBarrel:
     case OuterTrackerBarrel: {
