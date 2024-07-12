@@ -3,8 +3,8 @@
 #include <edm4hep/TrackerHitPlane.h>
 #include <edm4hep/MCRecoParticleAssociation.h>
 
-DECLARE_COMPONENT_WITH_ID(ACTSMergeCollections<TrackerHitPlaneCollection>, "ACTSMergeTrackerHitPlaneCollections")
-DECLARE_COMPONENT_WITH_ID(ACTSMergeCollections<MCRecoParticleAssociationCollection>, "ACTSMergeMCRecoParticleAssociationCollections")
+DECLARE_COMPONENT_WITH_ID(ACTSMergeCollections<edm4hep::TrackerHitPlaneCollection>, "ACTSMergeTrackerHitPlaneCollections")
+DECLARE_COMPONENT_WITH_ID(ACTSMergeCollections<edm4hep::MCRecoParticleAssociationCollection>, "ACTSMergeMCRecoParticleAssociationCollections")
 
 
 ACTSMergeCollections::ACTSMergeCollections(const std::string& name, ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc, {

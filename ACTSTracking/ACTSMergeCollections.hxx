@@ -38,7 +38,7 @@ public:
                 const CollectionType col6) const override;
 };
 
-extern template class ACTSMergeCollections<TrackerHitPlaneCollection>;
-extern template class ACTSMergeCollections<MCRecoParticleAssociationCollection>;
+extern template class ACTSMergeCollections<edm4hep::TrackerHitPlaneCollection>;
+extern template class ACTSMergeCollections<edm4hep::MCRecoParticleAssociationCollection>;
 
 #endif // ACTSMergeCollections_h
