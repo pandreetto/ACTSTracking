@@ -78,15 +78,14 @@ EVENT::Track* ACTS2Marlin_track(
     std::shared_ptr<Acts::MagneticFieldProvider> magneticField,
     Acts::MagneticFieldProvider::Cache& magCache);
 */
-EVENT::Track* ACTS2Marlin_track(
-    const TrackResult& fitter_res,
-    std::shared_ptr<Acts::MagneticFieldProvider> magneticField,
-    Acts::MagneticFieldProvider::Cache& magCache);
 
 EVENT::Track* ACTS2Marlin_track(
     const TrackResult& fitter_res,
     std::shared_ptr<Acts::MagneticFieldProvider> magneticField,
-    Acts::MagneticFieldProvider::Cache& magCache, double caloFaceR, double caloFaceZ, Acts::GeometryContext geoContext, Acts::MagneticFieldContext magFieldContext, std::shared_ptr<const Acts::TrackingGeometry> trackingGeo);
+    Acts::MagneticFieldProvider::Cache& magCache,
+    double caloFaceR, double caloFaceZ, Acts::GeometryContext geoContext,
+    Acts::MagneticFieldContext magFieldContext,
+    std::shared_ptr<const Acts::TrackingGeometry> trackingGeo);
 
 //! Convert ACTS track state class to Marlin class
 /**
