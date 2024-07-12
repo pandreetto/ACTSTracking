@@ -3,7 +3,7 @@
 
 // edm4hep
 #include <edm4hep/TrackerHitPlaneCollection.h>
-#include <edm4hep/MCRecoParticleAssociationCollection.h>
+#include <edm4hep/MCRecoTrackParticleAssociationCollection.h>
 
 // Gaudi
 #include <GaudiAlg/GaudiAlgorithm.h>
@@ -27,7 +27,7 @@ class ACTSMergeCollection : public Gaudi::Functional::MultiTransformer <Collecti
 		const CollectionType,
 		const CollectionType), BaseClass_t> {
 public:
-	ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc);
+	ACTSMergeCollection(const std::string& name, ISvcLocator* svcLoc);
 
 	CollectionType operator()(
 		const CollectionType col1,
