@@ -72,6 +72,15 @@ ACTSSeededCKFTrackingProc::ACTSSeededCKFTrackingProc()
                              "Track error estimate, local position (mm).",
                              _initialTrackError_pos, 10_um);
 
+  // Extrapolation to calo surface
+  registerProcessorParameter("CaloFace_Radius",
+                             "ECAL Inner Radius (mm).",
+                             _caloFaceR, _caloFaceR);
+  
+  registerProcessorParameter("CaloFace_Z",
+                             "ECAL half length (mm).",
+                             _caloFaceZ, _caloFaceZ);
+
   // Seeding configurations
   registerProcessorParameter(
       "SeedingLayers",
@@ -682,7 +691,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
           // Make track object
           EVENT::Track *track = ACTSTracking::ACTS2Marlin_track(
-              trackTip, magneticField(), magCache);
+              trackTip, magneticField(), magCache, _caloFaceR, _caloFaceZ, geometryContext(), magneticFieldContext(), trackingGeometry());
 
           // Save results
           trackCollection->addElement(track);
