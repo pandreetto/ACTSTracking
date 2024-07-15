@@ -50,8 +50,8 @@ ACTSDuplicateRemoval::ACTSDuplicateRemoval(const std::string& name, ISvcLocator*
 				KeyValue("InputTrackCollectionName", "TruthTracks"),
 				KeyValue("OutputTrackCollectionName", "DedupedTruthTracks")) {}
 
-edm4hep::TrackCollecion ACTSDuplicateRemoval::operator()(const edm4hep::TrackCollection& trackCollection) const{
-	// Make output collecion
+edm4hep::TrackCollection ACTSDuplicateRemoval::operator()(const edm4hep::TrackCollection& trackCollection) const{
+	// Make output collection
 	auto outputTracks = new edm4hep::TrackCollection();
 
 	// Insertion sort input tracks

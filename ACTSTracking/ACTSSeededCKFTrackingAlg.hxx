@@ -19,8 +19,8 @@ public:
 	ACTSSeededCKFTrackingAlg(const std::string& name, ISvcLocator* svcLoc);
 
 	StatusCode initialize();
-        std::tuple<emd4hep::TrackCollecion, 
-		   edm4hep::TrackCollecion> operator(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection) const;
+        std::tuple<edm4hep::TrackCollection, 
+		   edm4hep::TrackCollection> operator(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection) const;
 
 protected:
 	// Collection names for (in/out)put

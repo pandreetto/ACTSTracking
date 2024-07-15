@@ -2,10 +2,10 @@
 #define TrackTruthAlg_h 1
 
 // edm4hep
-#include <edm4hep/TrackCollecion.h>
-#include <edm4hep/MCParticleCollecion.h>
-#include <edm4hep/TrackerHitPlaneCollecion.h>
-#include <edm4hep/MCRecoTrackParticleAssociationCollecion.h>
+#include <edm4hep/TrackCollection.h>
+#include <edm4hep/MCParticleCollection.h>
+#include <edm4hep/TrackerHitPlaneCollection.h>
+#include <edm4hep/MCRecoTrackParticleAssociationCollection.h>
 
 // Gaudi
 #include <GaudiAlg/GaudiAlgorithm.h>
@@ -13,7 +13,7 @@
 #include <k4FWCore/BaseClass.h>
 
 // k4FWCore
-#include <k4WFCore/DataHandle.h>
+#include <k4FWCore/DataHandle.h>
 
 // std
 #include <string>
@@ -30,17 +30,17 @@
  * @author Samuel Ferraro, Unknown
  */
 
-class TrackTruthAlg : public Gaudi::Functional::MultiTransformer<edm4hep::MCRecoTrackParticleAssociationCollecion(
-			const edm4hep::TrackCollecion, 
+struct TrackTruthAlg final : Gaudi::Functional::MultiTransformer<edm4hep::MCRecoTrackParticleAssociationCollection(
+			const edm4hep::TrackCollection, 
 			const edm4hep::MCParticleCollection, 
-			const edm4hep::TrackerHitPlaneCollecion), BaseClass_t> {
+			const edm4hep::TrackerHitPlaneCollection)> {
 public:
 	TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc);
 
-	edm4hep::MCRecoParticleAssociationCollecion operator()(
-			const edm4hep::TrackCollecion tracks, 
+	edm4hep::MCRecoParticleAssociationCollection operator()(
+			const edm4hep::TrackCollection tracks, 
                         const edm4hep::MCParticleCollection mcParticles,
-                        const edm4hep::TrackerHitPlaneCollecion trackerHitRelations) const;
+                        const edm4hep::TrackerHitPlaneCollection trackerHitRelations) const;
 };
 
 #endif

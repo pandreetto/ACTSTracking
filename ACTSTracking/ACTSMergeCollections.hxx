@@ -11,7 +11,7 @@
 #include <k4FWCore/BaseClass.h>
 
 // k4FWCore
-#include <k4WFCore/DataHandle.h>
+#include <k4FWCore/DataHandle.h>
 
 //! \brief Combine 6 collections into 1
 /**
@@ -19,13 +19,13 @@
  * @version $Id$
  */
 template<typename CollectionType>
-class ACTSMergeCollection : public Gaudi::Functional::MultiTransformer <CollectionType(
+struct ACTSMergeCollection final: Gaudi::Functional::MultiTransformer <CollectionType(
 		const CollectionType,
 		const CollectionType,
 		const CollectionType,
 		const CollectionType,
 		const CollectionType,
-		const CollectionType), BaseClass_t> {
+		const CollectionType)> {
 public:
 	ACTSMergeCollection(const std::string& name, ISvcLocator* svcLoc);
 

@@ -1,7 +1,7 @@
 #include "ACTSAlgBase.hxx"
 
 #include <TGeoManager.h>
-
+#include <GaudiKernel/MsgStream.h>
 #include <DD4hep/DD4hepUnits.h>
 #include <DD4hep/Detector.h>
 
@@ -26,10 +26,10 @@
 
 using namespace ACTSTracking;
 
-ACTSAlgBase::ACTSAlgBase(const std::string& name ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc, 
+ACTSAlgBase::ACTSAlgBase(const std::string& name, ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc, 
 		{ KeyValue("InputTrackerHitCollectionName", "TrackerHits") }, {
 		  KeyValue("OutputSeedCollectionName", "SeedTracks"),
-		  KeyValue("OutputTrackCollecionName", "Tracks") }) {}
+		  KeyValue("OutputTrackCollectionName", "Tracks") }) {}
 
 std::shared_ptr<GeometryIdMappingTool> ACTSAlgBase::geoIDMappingTool() const {
 	return m_geoIDMappingTool;
@@ -65,15 +65,16 @@ StatusCode ACTSAlgBase::initialize() {
 	m_matFile = findFile(m_matFile);
 	m_tgeoFile = findFile(m_tgeoFile);
 
+	MsgStream log(msgSvc(), name());
 	// Load geometry
-	message() << " -------------------------------------" << endmsg;
+	log << MSG::INFO << " -------------------------------------" << endmsg;
 
-	message() << " -- Building magnetic field" << endmsg;
+	log << MSG::INFO << " -- Building magnetic field" << endmsg;
 	buildBfield();
-	message() << " -- Building tracking detector" << endmsg;
+	log << MSG::INFO << " -- Building tracking detector" << endmsg;
 	buildDetector();
 
-	message()  // << " ---- instantiated  geometry for detector " <<
+	log << MSG::INFO // << " ---- instantiated  geometry for detector " <<
 	// theDetector.header().name()  << std::endl
 	<< " -------------------------------------" << endmsg;
 
@@ -106,7 +107,7 @@ void ACTSAlgBase::buildDetector() {
     gGeoManager = nullptr;  // prevents it from being deleted
 
     // Load new geometry
-    TGeoManager::Import(m_tgeoFile.c_str());
+    TGeoManager::Import(m_tgeoFile.value().c_str());
   }
 
   // configure surface array creator

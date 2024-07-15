@@ -14,20 +14,20 @@
 DECLARE_COMPONENT(TrackTruthAlg)
 
 TrackTruthAlg::TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc, {
-		KeyValue("InputTrackCollecionName", "Tracks"),
-		KeyValue("InputMCParticleCollecionName", "MCParticle"),
+		KeyValue("InputTrackCollectionName", "Tracks"),
+		KeyValue("InputMCParticleCollectionName", "MCParticle"),
 		KeyValue("InputTrackerHit2SimTrackerHitRelationName", "TrackMCRelation") },
 		{ KeyValue("OutputParticle2TrackRelationName", "Particle2TrackRelationName") })	{}
 
 edm4hep::MCRecoTrackParticleAssociationCollection TrackTruthAlg::operator()(
-			const edm4hep::TrackCollecion tracks,
+			const edm4hep::TrackCollection tracks,
                         const edm4hep::MCParticleCollection mcParticles,
-                        const edm4hep::TrackerHitPlaneCollecion trackerHitRelations) const{
+                        const edm4hep::TrackerHitPlaneCollection trackerHitRelations) const{
 	// Map TrackerHits to SimTrackerHits
 	std::map<edm4hep::TrackerHit, edm4hep::SimTrackerHit> trackerHit2SimHit;
 	for (auto& hitRel : *trackerHitRelations) {
-		auto trackerHit = hitRel.getFrom<emd4hep::TrackerHit>();
-		auto simTrackerHit = hitRel.getTo<emd4hep::SimTrackerHit>();
+		auto trackerHit = hitRel.getFrom<edm4hep::TrackerHit>();
+		auto simTrackerHit = hitRel.getTo<edm4hep::SimTrackerHit>();
 		trackerHit2SimHit[trackerHit] = simTrackerHit;
 	}
 

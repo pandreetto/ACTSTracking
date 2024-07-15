@@ -48,12 +48,12 @@ TARGET_INCLUDE_DIRECTORIES(ACTSTracking
     ${Gaudi_INCLUDE_DIRS}
     ${ROOT_INCLUDE_DIRS})
 TARGET_LINK_LIBRARIES(ACTSTracking
-  ${ROOT_LIBRARIES} 
+  ${ROOT_LIBRARIES}
+  k4FWCore::k4FWCore 
   DD4hep::DDCore
   Gaudi::GaudiKernel
   Gaudi::GaudiAlgLib
-  EMD4HEP::edm4hep
-  k4FWCore::k4FWCore
+  EDM4HEP::edm4hep
   ActsCore ActsPluginTGeo ActsPluginJson)
 
 INSTALL( TARGETS ACTSTracking DESTINATION lib )

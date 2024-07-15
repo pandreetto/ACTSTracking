@@ -3,10 +3,11 @@
 #include <edm4hep/MCParticle.h>
 #include <edm4hep/SimTrackerHit.h>
 #include <edm4hep/TrackerHitPlane.h>
-
 #include <edm4hep/Track.h>
 #include <edm4hep/TrackState.h>
 #include <edm4hep/MutableTrack.h>
+
+#include <GaudiKernel/MsgStream.h>
 
 #include <Acts/EventData/MultiTrajectory.hpp>
 #include <Acts/Propagator/EigenStepper.hpp>
@@ -40,7 +41,8 @@ ACTSSeededCKFTrackingAlg::ACTSSeededCKFTrackingAlg(const std::string& name, ISvc
 	: ACTSAlgBase(name, svcLoc) {}
 
 StatusCode ACTSSeededCKFTrackingAlg::initialize() {
-	info() << "Initializing ACTSSeededCKFTrackingAlg" << endmsg;
+	MsgStream log(msgSvc(), name());
+	log << MSG::INFO << "Initializing ACTSSeededCKFTrackingAlg" << endmsg;
 	ACTSAlgBase::initialize();
 	// Reset counters
 	m_fitFails = 0;
@@ -76,8 +78,8 @@ StatusCode ACTSSeededCKFTrackingAlg::initialize() {
 	return StatusCode::SUCCESS;
 }
 
-std::tuple<emd4hep::TrackCollecion,
-           edm4hep::TrackCollecion> ACTSSeededCKFTrackingAlg::operator(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection) const{
+std::tuple<edm4hep::TrackCollection,
+           edm4hep::TrackCollection> ACTSSeededCKFTrackingAlg::operator(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection) const{
 	// Prepare input hits in ACTS format
 
 	// Loop over each hit collections and get a single vector with hits
@@ -164,8 +166,9 @@ std::tuple<emd4hep::TrackCollecion,
 			spacePoints.push_back(ACTSTracking::SeedSpacePoint(globalPos, var[0], var[1], sourceLink));
 		}
 	}
-
-	info() << "Created " << spacePoints.size() << " space points" << endmsg;
+	
+	MsgStream log(msgSvc(), name());
+	log << MSG::INFO << "Created " << spacePoints.size() << " space points" << endmsg;
 
 	// Run seeding + tracking algorithms
 	// Caches
@@ -288,7 +291,7 @@ std::tuple<emd4hep::TrackCollecion,
 				gridCfg.zBinEdges[k] = pos;
 			}
 			else {
-				warning() << "Wrong parameter SeedFinding_zBinEdges; " << "default used" <<endmsg;
+				log << MSG::WARNING << "Wrong parameter SeedFinding_zBinEdges; " << "default used" <<endmsg;
 				gridCfg.zBinEdges.clear();
 				break;
 			}
@@ -351,7 +354,7 @@ std::tuple<emd4hep::TrackCollecion,
 			const Acts::GeometryIdentifier& geoId = sourceLink.geometryId();
 			const Acts::Surface* surface = trackingGeometry()->findSurface(geoId);
 			if (surface == nullptr) {
-				info() << "surface with geoID " << geoId << " is not found in the tracking gemetry" << endmsg;
+				log << MSG::INFO << "surface with geoID " << geoId << " is not found in the tracking gemetry" << endmsg;
 				continue;
 			}
 
@@ -365,7 +368,7 @@ std::tuple<emd4hep::TrackCollecion,
 			std::optional<Acts::BoundVector> optParams = Acts::estimateTrackParamsFromSeed(geometryContext(),
 				seed.sp().begin(), seed.sp().end(), *surface, *seedField, 0.1_T);
 			if (!optParams.has_value()) {
-				info() << "Failed estimation of track parameters for seed." << endmsg;
+				log << MSG::INFO << "Failed estimation of track parameters for seed." << endmsg;
 				continue;
 			}
 
@@ -410,10 +413,10 @@ std::tuple<emd4hep::TrackCollecion,
 			seedTrack.addToTrackState(seedTrackState);
 			seedCollection->push_back(seedTrack)
 
-			debug() << "Seed Paramemeters" << std::endl << paramseed << endmsg;
+			log << MSG::DEBUG << "Seed Paramemeters" << std::endl << paramseed << endmsg;
 		}
 
-		debug() << "Seeds found: " << std::endl << paramseeds.size() << endmsg;
+		log << MSG::DEBUG << "Seeds found: " << std::endl << paramseeds.size() << endmsg;
 
 		// Find the tracks
 		if (!m_runCKF) continue;
@@ -432,13 +435,13 @@ std::tuple<emd4hep::TrackCollecion,
 				const auto& fitOutput = result.value();
 				for (const TrackContainer::TrackProxy& trackTip : fitOutput) {
 					// Helpful debug output
-					debug() << "Trajectory Summary" << endmsg;
-					debug() << "\tchi2Sum       " << trackTip.chi2() << endmsg;
-					debug() << "\tNDF           " << trackTip.nDoF() << endmsg;
-					debug() << "\tnHoles        " << trackTip.nHoles() << endmsg;
-					debug() << "\tnMeasurements " << trackTip.nMeasurements() << endmsg;
-					debug() << "\tnOutliers     " << trackTip.nOutliers() << endmsg;
-					debug() << "\tnStates       " << trackTip.nTrackStates() << endmsg;
+					log << MSG::DEBUG << "Trajectory Summary" << endmsg;
+					log << MSG::DEBUG << "\tchi2Sum       " << trackTip.chi2() << endmsg;
+					log << MSG::DEBUG << "\tNDF           " << trackTip.nDoF() << endmsg;
+					log << MSG::DEBUG << "\tnHoles        " << trackTip.nHoles() << endmsg;
+					log << MSG::DEBUG << "\tnMeasurements " << trackTip.nMeasurements() << endmsg;
+					log << MSG::DEBUG << "\tnOutliers     " << trackTip.nOutliers() << endmsg;
+					log << MSG::DEBUG << "\tnStates       " << trackTip.nTrackStates() << endmsg;
 
 					// Make track object
 					edm4hep::Track track = ACTSTracking::ACTS2edm4hep_track(trackTip, magneticField(), magCache);
@@ -447,7 +450,7 @@ std::tuple<emd4hep::TrackCollecion,
 					trackCollection->push_back(track);
 				}
 			} else {
-				warning() << "Track fit error: " << result.error() << endmsg;
+				log << MSG::WARNING << "Track fit error: " << result.error() << endmsg;
 				m_fitFails++;
 			}
 		}

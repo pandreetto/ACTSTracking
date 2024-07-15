@@ -11,7 +11,7 @@
 #include <k4FWCore/BaseClass.h>
 
 // k4FWCore
-#include <k4WFCore/DataHandle.h>
+#include <k4FWCore/DataHandle.h>
 
 //! \brief Remove track duplicates
 /**
@@ -21,11 +21,11 @@
  * @author Karol Krizka, Samuel Ferraro
  * @version $Id$
  */
-class ACTSDuplicateRemoval : public Gaudi::Functional::Transformer <edm4hep::TrackCollection(const edm4hep::TrackCollection&), BaseClass_t> {
+struct ACTSDuplicateRemoval final : Gaudi::Functional::Transformer <edm4hep::TrackCollection(const edm4hep::TrackCollection&)> {
 public:
 	ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc);
 
-	edm4hep::TrackCollection operator()(const edm4hep::TrackCollection& trackCollecion) const override;
+	edm4hep::TrackCollection operator()(const edm4hep::TrackCollection& trackCollection) const override;
 };
 
 namespace ACTSTracking {

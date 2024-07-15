@@ -9,19 +9,20 @@
 #include <Acts/Plugins/TGeo/TGeoDetectorElement.hpp>
 #include <Acts/Utilities/CalibrationContext.hpp>
 
-// emd4hep
+// edm4hep
 #include <edm4hep/TrackCollection.h>
 #include <edm4hep/TrackerHitPlaneCollection.h>
 
 // Gaudi
-#include <GaudiAlg/GaudiAlgorithm.h>
+#include <Gaudi/Property.h>
 #include <GaudiAlg/Transformer.h>
-#include <k4FWCore/BaseClass.h>
 
 // k4FWCore
-#include <k4WFCore/DataHandle.h>
+#include <k4FWCore/DataHandle.h>
+#include <k4FWCore/BaseClass.h>
 
 #include <tuple>
+#include <string>
 #include "GeometryIdMappingTool.hxx"
 
 //! Base processor for ACTS tracking
@@ -36,10 +37,10 @@
  * @author Karol Krizka, Samuel Ferraro
  * @version $Id$
  */
-class ACTSAlgBase : public Gaudi::Functional::MultiTransformer<std::tuple<
-		    emd4hep::TrackCollecion, 
-		    edm4hep::TrackCollecion>(
-		    const edm4hep::TrackerHitPlaneCollecion), BaseClass_t> {
+struct ACTSAlgBase final : Gaudi::Functional::MultiTransformer<std::tuple<
+		    edm4hep::TrackCollection, 
+		    edm4hep::TrackCollection>(
+		    const edm4hep::TrackerHitPlaneCollection &)> {
 	using DetectorElementPtr = std::shared_ptr<const Acts::TGeoDetectorElement>;
 	using DetectorStore = std::vector<DetectorElementPtr>;
 
