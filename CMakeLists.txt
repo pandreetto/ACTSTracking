@@ -51,7 +51,7 @@ TARGET_LINK_LIBRARIES(ACTSTracking
   ${ROOT_LIBRARIES} 
   DD4hep::DDCore
   Gaudi::GaudiKernel
-  Gaudi::GaudiAlg
+  Gaudi::GaudiAlgLib
   EMD4HEP::edm4hep
   k4FWCore::k4FWCore
   ActsCore ActsPluginTGeo ActsPluginJson)
