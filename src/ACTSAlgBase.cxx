@@ -29,11 +29,7 @@ using namespace ACTSTracking;
 ACTSAlgBase::ACTSAlgBase(const std::string& name ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc, 
 		{ KeyValue("InputTrackerHitCollectionName", "TrackerHits") }, {
 		  KeyValue("OutputSeedCollectionName", "SeedTracks"),
-		  KeyValue("OutputTrackCollecionName", "Tracks") }) {
-	// configuration
-	decalreProperty("MatFile", m_matFile = std::string(""), "Path to the material description JSON file. Can be empty.");
-	declareProperty("TGeoFile", m_tgeoFile = std::string(""), "Path to the tracker geometry file.");
-}
+		  KeyValue("OutputTrackCollecionName", "Tracks") }) {}
 
 std::shared_ptr<GeometryIdMappingTool> ACTSAlgBase::geoIDMappingTool() const {
 	return m_geoIDMappingTool;

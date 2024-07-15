@@ -37,41 +37,7 @@ using SSPoint = ACTSTracking::SeedSpacePoint;
 DECLARE_COMPONENT(ACTSSeededCKFTrackingAlg)
 
 ACTSSeededCKFTrackingAlg::ACTSSeededCKFTrackingAlg(const std::string& name, ISvcLocator* svcLoc) 
-	: ACTSAlgBase(name, svcLoc) {
-
-	// Settings
-	declareProperty("RunCKF", m_runCKF, "Run tracking using CKF. False means stop at the seeding stage.");
-	declareProperty("InitialTrackError_RelP", m_initialTrackError_relP = 0.25, "Track error estimate, momentum component (relative).");
-	declareProperty("InitialTrackError_Phi", m_initialTrackError_phi = 1_degree, "Track error estimate, phi (radians).");
-	declareProperty("InitialTrackError_Lambda", m_initialTrackError_lambda = 1_degree, "Track error estimate, lambda (radians).");
-	declareProperty("InitialTrackError_Pos", m_initialTrackError_pos = 10_um, "Track error estimate, local position (mm).");
-
-	// Seeding configurations
-	declareProperty("SeedingLayers", m_seedingLayers, "Layers to use for seeding in vector.");
-	declareProperty("SeedFinding_RMax", m_seedFinding_rMax, "Maximum radius of hits to consider.");
-	declareProperty("SeedFinding_DeltaRMin", m_seedFinding_deltaRMin, "Minimum dR between hits in a seed.");
-	declareProperty("SeedFinding_DeltaRMax", m_seedFinding_deltaRMax, "Maximum dR between hits in a seed.");
-	declareProperty("SeedFinding_DeltaRMinTop", m_seedFinding_deltaRMinTop = 0.f, "Minimum dR between the reference hit and outer ones in a seed.");
-	declareProperty("SeedFinding_DeltaRMaxTop", m_seedFinding_deltaRMaxTop = 0.f, "Maximum dR between the reference hit and outer ones in a seed.");
-	declareProperty("SeedFinding_DeltaRMinBottom", m_seedFinding_deltaRMinBottom = 0.f, "Minimum dR between the reference hit and inner ones in a seed.");
-	declareProperty("SeedFinding_DeltaRMaxBottom", m_seedFinding_deltaRMaxBottom = 0.f, "Maximum dR between the reference hit and inner ones in a seed.");
-	declareProperty("SeedFinding_zTopBinLen", m_zTopBinLen = 1, "Number of top bins along Z for seeding.");
-	declareProperty("SeedFinding_zBottomBinLen", m_zBottomBinLen = 1, "Number of bottom bins along Z for seeding.");
-	declareProperty("SeedFinding_phiTopBinLen", m_phiTopBinLen = 1, "Number of top bins along phi for seeding.");
-	declareProperty("SeedFinding_phiBottomBinLen", m_phiBottomBinLen = 1, "Number of bottom bins along phi for seeding.");
-	declareProperty("SeedFinding_zBinEdges", m_seedFinding_zBinEdges = StringVec(0), "Bins placement along Z for seeding.");
-	declareProperty("SeedFinding_CollisionRegion", m_seedFinding_collisionRegion, "Size of the collision region in one direction (assumed symmetric).");
-	declareProperty("SeedFinding_ZMax", m_seedFinding_zMax, "Maximum z of hits to consider.");
-	declareProperty("SeedFinding_RadLengthPerSeed", m_seedFinding_radLengthPerSeed, "Average radiation length per seed.");
-	declareProperty("SeedFinding_SigmaScattering", m_seedFinding_sigmaScattering, "Number of sigmas to allow in scattering angle.");
-	declareProperty("SeedFinding_MinPt", m_seedFinding_minPt, "Minimum pT of tracks to seed.");
-	declareProperty("SeedFinding_ImpactMax", m_seedFinding_impactMax, "Maximum d0 of tracks to seed.");
-	declareProperty("PropagateBackward", m_propagateBackward, "Extrapolates tracks towards beamline.");
-
-	// CKF configuration
-	declareProperty("CKF_Chi2CutOff", m_CKF_chi2CutOff, "Maximum local chi2 contribution.");
-	declareProperty("CKF_NumMeasurementsCutOff", m_CKF_numMeasurementsCutOff, "Maximum number of associated measurements on a single surface.");
-}
+	: ACTSAlgBase(name, svcLoc) {}
 
 StatusCode ACTSSeededCKFTrackingAlg::initialize() {
 	info() << "Initializing ACTSSeededCKFTrackingAlg" << endmsg;

@@ -52,10 +52,10 @@ private:
 
 protected:
 	//! Path to material file
-	std::string m_matFile{};
+	Gaudi::Property<std::string> m_matFile{this, "MatFile", std::string(""), "Path to the material description JSON file. Can be empty."};
 
 	//! Path to tracker geometry file
-	std::string m_tgeoFile{};
+	Gaudi::Property<std::string> m_tgeoFile{this, "TGeoFile", std::string(""), "Path to the tracker geometry file."};
 
 	std::shared_ptr<ACTSTracking::GeometryIdMappingTool> geoIDMappingTool() const;
 
