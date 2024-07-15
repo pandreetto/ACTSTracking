@@ -237,7 +237,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.parseRanges.push_back({Acts::binR, {0, 120}});
 
       // Fill the parsing restrictions in z
-      lConfig.parseRanges.push_back({Acts::binZ, {-285, -70}});
+      lConfig.parseRanges.push_back({Acts::binZ, {-405, -140}});
 
       // Fill the layer splitting parameters in z
       lConfig.splitConfigs.push_back({Acts::binZ, 1});
@@ -262,7 +262,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.splitConfigs.push_back({Acts::binR, 0.1});
 
       // Fill the parsing restrictions in z
-      lConfig.parseRanges.push_back({Acts::binZ, {-70, 70}});
+      lConfig.parseRanges.push_back({Acts::binZ, {-140, 140}});
 
       // Save
       layerBuilderConfig.layerConfigurations[1].push_back(lConfig);
@@ -281,7 +281,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.parseRanges.push_back({Acts::binR, {0, 120}});
 
       // Fill the parsing restrictions in z
-      lConfig.parseRanges.push_back({Acts::binZ, {70, 285}});
+      lConfig.parseRanges.push_back({Acts::binZ, {140, 405}});
 
       // Fill the layer splitting parameters in z
       lConfig.splitConfigs.push_back({Acts::binZ, 1});
@@ -319,7 +319,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.parseRanges.push_back({Acts::binR, {50, 500}});
 
       // Fill the parsing restrictions in z
-      lConfig.parseRanges.push_back({Acts::binZ, {-600, -500}});
+      lConfig.parseRanges.push_back({Acts::binZ, {-650, -500}});
 
       // Fill the layer splitting parameters in z
       lConfig.splitConfigs.push_back({Acts::binZ, 10});
@@ -359,7 +359,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.parseRanges.push_back({Acts::binR, {50, 500}});
 
       // Fill the parsing restrictions in z
-      lConfig.parseRanges.push_back({Acts::binZ, {500, 600}});
+      lConfig.parseRanges.push_back({Acts::binZ, {500, 650}});
 
       // Fill the layer splitting parameters in z
       lConfig.splitConfigs.push_back({Acts::binZ, 10});
@@ -394,7 +394,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.localAxes = "XYZ";
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, {120, 600}});
+      lConfig.parseRanges.push_back({Acts::binR, {100, 600}});
 
       // Fill the parsing restrictions in z
       lConfig.parseRanges.push_back({Acts::binZ, {-2210, -750}});
@@ -434,7 +434,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.localAxes = "XYZ";
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, {120, 600}});
+      lConfig.parseRanges.push_back({Acts::binR, {100, 600}});
 
       // Fill the parsing restrictions in z
       lConfig.parseRanges.push_back({Acts::binZ, {750, 2210}});
@@ -472,7 +472,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.localAxes = "XYZ";
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, {570, 1550}});
+      lConfig.parseRanges.push_back({Acts::binR, {570, 1650}});
 
       // Fill the parsing restrictions in z
       lConfig.parseRanges.push_back({Acts::binZ, {-2210, -1300}});
@@ -492,7 +492,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.localAxes = "XYZ";
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, {600, 1550}});
+      lConfig.parseRanges.push_back({Acts::binR, {600, 1650}});
 
       // Fill the layer splitting parameters in r
       lConfig.splitConfigs.push_back({Acts::binR, 10});
@@ -512,7 +512,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.localAxes = "XYZ";
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, {570, 1550}});
+      lConfig.parseRanges.push_back({Acts::binR, {570, 1650}});
 
       // Fill the parsing restrictions in z
       lConfig.parseRanges.push_back({Acts::binZ, {1300, 2210}});

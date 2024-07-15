@@ -239,6 +239,8 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     // Convert to Acts hit
     const Acts::Surface *surface = trackingGeometry()->findSurface(hit.first);
 
+    //std::cout << "hit: " << hit.first.volume() << " " << hit.first.boundary() << " " << hit.first.layer() << " " << hit.first.approach() << " " << hit.first.sensitive() << std::endl;
+
     const double *lcioglobalpos = hit.second->getPosition();
     Acts::Vector3 globalPos = {lcioglobalpos[0], lcioglobalpos[1],
                                lcioglobalpos[2]};
