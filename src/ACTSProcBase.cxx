@@ -472,7 +472,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.localAxes = "XYZ";
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, {570, 1650}});
+      lConfig.parseRanges.push_back({Acts::binR, {600, 1650}});
 
       // Fill the parsing restrictions in z
       lConfig.parseRanges.push_back({Acts::binZ, {-2210, -1300}});
@@ -512,7 +512,7 @@ void ACTSProcBase::buildDetector() {
       lConfig.localAxes = "XYZ";
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, {570, 1650}});
+      lConfig.parseRanges.push_back({Acts::binR, {600, 1650}});
 
       // Fill the parsing restrictions in z
       lConfig.parseRanges.push_back({Acts::binZ, {1300, 2210}});
