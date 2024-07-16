@@ -43,14 +43,11 @@ ACTSSeededCKFTrackingAlg::ACTSSeededCKFTrackingAlg(const std::string& name, ISvc
 StatusCode ACTSSeededCKFTrackingAlg::initialize() {
 	MsgStream log(msgSvc(), name());
 	log << MSG::INFO << "Initializing ACTSSeededCKFTrackingAlg" << endmsg;
-	ACTSAlgBase::initialize();
-	// Reset counters
-	m_fitFails = 0;
+	StatusCode init = ACTSAlgBase::initialize();
 
 	// Initialize seeding layers
 	std::vector<std::string> seedingLayers;
-	std::copy_if(m_seedingLayers.begin(), ,_seedingLayers.end(),
-	std::back_inserter(seedingLayers),
+	std::copy_if(m_seedingLayers.begin(), m_seedingLayers.end(), std::back_inserter(seedingLayers),
 	[](const std::string &s) { return !s.empty(); });
 
 	if (seedingLayers.size() % 2 != 0) {
@@ -75,27 +72,30 @@ StatusCode ACTSSeededCKFTrackingAlg::initialize() {
 	if (m_seedFinding_deltaRMinBottom == 0.f) m_seedFinding_deltaRMinBottom = m_seedFinding_deltaRMin;
 	if (m_seedFinding_deltaRMaxBottom == 0.f) m_seedFinding_deltaRMaxBottom = m_seedFinding_deltaRMax;
 	
-	return StatusCode::SUCCESS;
+	return init;
 }
 
 std::tuple<edm4hep::TrackCollection,
-           edm4hep::TrackCollection> ACTSSeededCKFTrackingAlg::operator(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection) const{
-	// Prepare input hits in ACTS format
-
+           edm4hep::TrackCollection> ACTSSeededCKFTrackingAlg::operator()(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection) const{
+	// Prepare output collections
+	edm4hep::TrackCollection seedCollection;
+	edm4hep::TrackCollection trackCollection;
+	
 	// Loop over each hit collections and get a single vector with hits
 	// from all of the subdetectors. Also include the Acts GeoId in
 	// the vector. It will be important for the sort to speed up the
 	// population of the final SourceLink multiset.
 	std::vector<std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane*>> sortedHits;
-	for (auto& hit : *trackerHitCollection) {
+	for (size_t i = 0; i < trackerHitCollection.size(); ++i) {
+		auto hit = trackerHitCollection.at(i);
 		sortedHits.push_back(std::make_pair(geoIDMappingTool()->getGeometryID(hit), &hit));
 	}
 
 	// Sort by GeoID
 	std::sort(
 		sortedHits.begin(), sortedHits.end(),
-		[](const std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHit*>& hit0,
-		   const std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHit*>& hit1) -> bool { 
+		[](const std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane*>& hit0,
+		   const std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane*>& hit1) -> bool { 
 			return hit0.first < hit1.first; 
 		});
 
@@ -106,12 +106,12 @@ std::tuple<edm4hep::TrackCollection,
 	ACTSTracking::SeedSpacePointContainer spacePoints;
 
 	sourceLinks.reserve(sortedHits.size());
-	for (std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHit*>& hit : sortedHits) {
+	for (auto& hitPair : sortedHits) {
 		// Convert to Acts hit
-		const Acts::Surface* surface = trackingGeometry()->findSurface(hit.first);
+		const Acts::Surface* surface = trackingGeometry()->findSurface(hitPair.first);
 		if (surface == nullptr) throw std::runtime_error("Surface not found");
 
-		const edm4hep::Vector3d& edmglobalpos = hit.second->getPosition();
+		const edm4hep::Vector3d& edmglobalpos = hitPair.second->getPosition();
 		Acts::Vector3 globalPos = {edmglobalpos.x, edmglobalpos.y, edmglobalpos.z};
 		Acts::Result<Acts::Vector2> lpResult = surface->globalToLocal(geometryContext(), globalPos, {0, 0, 0}, 0.5_um);
 		if (!lpResult.ok()) throw std::runtime_error("Global to local transformation did not succeed.");
@@ -119,7 +119,7 @@ std::tuple<edm4hep::TrackCollection,
 		Acts::Vector2 loc = lpResult.value();
 
 		Acts::SquareMatrix2 localCov = Acts::SquareMatrix2::Zero();
-		const edm4hep::TrackerHitPlane* hitplane = dynamic_cast<const edm4hep::TrackerHitPlane*>(hit.second);
+		const edm4hep::TrackerHitPlane* hitplane = hitPair.second;
 		if (hitplane) {
 			localCov(0, 0) = std::pow(hitplane->getDu() * Acts::UnitConstants::mm, 2);
 			localCov(1, 1) = std::pow(hitplane->getDv() * Acts::UnitConstants::mm, 2);
@@ -127,7 +127,7 @@ std::tuple<edm4hep::TrackCollection,
 			throw std::runtime_error("Currently only support TrackerHitPlane.");
 		}
 
-		ACTSTracking::SourceLink sourceLink(surface->geometryId(), measurements.size(), hit.second);
+		ACTSTracking::SourceLink sourceLink(surface->geometryId(), measurements.size(), *hitPair.second);
 		Acts::SourceLink src_wrap { sourceLink };
 		Acts::Measurement meas = Acts::makeMeasurement(src_wrap, loc, localCov, Acts::eBoundLoc0, Acts::eBoundLoc1);
 
@@ -284,7 +284,7 @@ std::tuple<edm4hep::TrackCollection,
 	gridCfg.zMin = finderCfg.zMin;
 	gridCfg.impactMax = finderCfg.impactMax;
 	if (m_seedFinding_zBinEdges.size() > 0) {
-		gridCfg.zBinEdges.resize(_seedFinding_zBinEdges.size());
+		gridCfg.zBinEdges.resize(m_seedFinding_zBinEdges.size());
 		for (int k = 0; k < m_seedFinding_zBinEdges.size(); k++) {
 			float pos = std::atof(m_seedFinding_zBinEdges[k].c_str());
 			if (pos >= finderCfg.zMin && pos < finderCfg.zMax) {
@@ -320,8 +320,8 @@ std::tuple<edm4hep::TrackCollection,
 	Acts::CylindricalSpacePointGridCreator::fillGrid(finderCfg, finderOpts, grid, 
 			spacePointPtrs.begin(), spacePointPtrs.end(), extractGlobalQuantities, rRangeSPExtent);
 
-	const Acts::GridBinFinder<2ul> bottomBinFinder(m_phiBottomBinLen, m_zBottomBinLen);
-	const Acts::GridBinFinder<2ul> topBinFinder(m_phiTopBinLen, m_zTopBinLen);
+	const Acts::GridBinFinder<2ul> bottomBinFinder(m_phiBottomBinLen.value(), m_zBottomBinLen.value());
+	const Acts::GridBinFinder<2ul> topBinFinder(m_phiTopBinLen.value(), m_zTopBinLen.value());
 
 	auto spacePointsGrouping = Acts::CylindricalBinnedGroup<SSPoint>(
 		std::move(grid), bottomBinFinder, topBinFinder);
@@ -410,8 +410,8 @@ std::tuple<edm4hep::TrackCollection,
 				seedTrack.addToTrackerHits(sourceLink.edm4hephit());
 			}
 
-			seedTrack.addToTrackState(seedTrackState);
-			seedCollection->push_back(seedTrack)
+			seedTrack.addToTrackStates(seedTrackState);
+			seedCollection->push_back(seedTrack);
 
 			log << MSG::DEBUG << "Seed Paramemeters" << std::endl << paramseed << endmsg;
 		}
@@ -451,7 +451,6 @@ std::tuple<edm4hep::TrackCollection,
 				}
 			} else {
 				log << MSG::WARNING << "Track fit error: " << result.error() << endmsg;
-				m_fitFails++;
 			}
 		}
 	}
@@ -459,4 +458,4 @@ std::tuple<edm4hep::TrackCollection,
 	return std::make_tuple(std::move(seedCollection), std::move(trackCollection));
 }
 
-}
+

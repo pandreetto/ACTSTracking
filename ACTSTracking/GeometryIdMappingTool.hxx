@@ -2,6 +2,7 @@
 
 #include <edm4hep/SimTrackerHit.h>
 #include <edm4hep/TrackerHit.h>
+#include <edm4hep/TrackerHitPlane.h>
 
 #include <string>
 #include <vector>
@@ -34,7 +35,9 @@ public:
 	*/
 	uint64_t getGeometryID(const edm4hep::SimTrackerHit& hit);
 	uint64_t getGeometryID(const edm4hep::TrackerHit& hit);
-
+	uint64_t getGeometryID(const edm4hep::TrackerHitPlane& hit);
+	uint64_t getGeometryIDTrack(uint64_t cellID);
+	
 	uint64_t getGeometryID(uint32_t systemID, uint32_t layerID, int32_t sideID,
 		uint32_t ladderID, uint32_t moduleID);
 

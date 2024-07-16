@@ -42,7 +42,7 @@ GeometryIdSelector::Mask GeometryIdSelector::makeMask(
   return GeometryIdSelector::Mask(0u);
 }
 
-bool GeometryIdSelector::check(const Acts::GeometryIdentifier& geoID) {
+bool GeometryIdSelector::check(const Acts::GeometryIdentifier& geoID) const{
   for (const std::pair<Acts::GeometryIdentifier, Mask>& reqGeoID :
        m_selection) {
     // equal within mask

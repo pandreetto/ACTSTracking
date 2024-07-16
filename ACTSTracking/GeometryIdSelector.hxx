@@ -18,7 +18,7 @@ class GeometryIdSelector {
   GeometryIdSelector(const std::vector<Acts::GeometryIdentifier>& selection);
 
   //! Determine if geometry belong to any requested geometries
-  bool check(const Acts::GeometryIdentifier& geoID);
+  bool check(const Acts::GeometryIdentifier& geoID) const;
 
   //! Make mask for comparing wildcarded geometry identifier
   static Mask makeMask(const Acts::GeometryIdentifier& id);

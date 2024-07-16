@@ -1,6 +1,6 @@
 #pragma once
 
-#include <edm4hep/TrackerHit.h>
+#include <edm4hep/TrackerHitPlane.h>
 
 #include "Acts/Surfaces/Surface.hpp"
 
@@ -12,7 +12,7 @@ class SourceLink final {
  public:
   //! \brief Construct from geometry identifier and hit
   SourceLink(Acts::GeometryIdentifier gid, std::size_t index,
-             edm4hep::TrackerHit edmhit)
+             edm4hep::TrackerHitPlane edmhit)
       : m_geometryId(gid), m_index(index), m_edm4hephit(edmhit) {}
 
   // Construct an invalid source link. Must be default constructible to
@@ -28,12 +28,12 @@ class SourceLink final {
   /// Access the index.
   constexpr std::size_t index() const { return m_index; }
   /// Access the edm4hep hit
-  edm4hep::TrackerHit edm4hephit() const { return m_edm4hephit; }
+  edm4hep::TrackerHitPlane edm4hephit() const { return m_edm4hephit; }
 
  private:
   Acts::GeometryIdentifier m_geometryId;
   std::size_t m_index = -1;
-  edm4hep::TrackerHit m_edm4hephit;
+  edm4hep::TrackerHitPlane m_edm4hephit;
 
   friend constexpr bool operator==(const SourceLink& lhs,
                                    const SourceLink& rhs) {

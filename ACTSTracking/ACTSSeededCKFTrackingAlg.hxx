@@ -4,29 +4,36 @@
 #include <edm4hep/TrackCollection.h>
 #include <edm4hep/TrackerHitPlaneCollection.h>
 
+#include <Gaudi/Property.h>
+
 #include <Acts/Definitions/Units.hpp>
 
 #include "ACTSAlgBase.hxx"
 #include "GeometryIdSelector.hxx"
+
+#include <string>
+#include <vector>
+
+using namespace Acts::UnitLiterals;
 
 /**
  * This code performs a true pattern recognition by looping over all MC
  * particles and adding all hits associated to them onto a prototrack. This is
  * then fitted and output.
  */
-class ACTSSeededCKFTrackingAlg : public ACTSAlgBase {
+struct ACTSSeededCKFTrackingAlg final : ACTSAlgBase {
 public:
 	ACTSSeededCKFTrackingAlg(const std::string& name, ISvcLocator* svcLoc);
 
 	StatusCode initialize();
         std::tuple<edm4hep::TrackCollection, 
-		   edm4hep::TrackCollection> operator(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection) const;
+		   edm4hep::TrackCollection> operator()(const edm4hep::TrackerHitPlaneCollection& trackerHitCollection) const;
 
 protected:
 	// Collection names for (in/out)put
-	std::vector<std::string> m_inputTrackerHitCollections;
-	std::string m_outputSeedCollection;
-	std::string m_outputTrackCollection;
+	//std::vector<std::string> m_inputTrackerHitCollections;
+	//std::string m_outputSeedCollection;
+	//std::string m_outputTrackCollection;
 
 	// Run settings
 	Gaudi::Property<bool> m_runCKF{this, "RunCKF", true, "Run tracking using CKF. False means stop at the seeding stage."};
@@ -47,7 +54,8 @@ protected:
 	Gaudi::Property<float> m_seedFinding_minPt{this, "SeedFinding_MinPt", 500.0, "Minimum pT of tracks to seed."};
 	Gaudi::Property<float> m_seedFinding_impactMax{this, "SeedFinding_ImpactMax", 3.0 * Acts::UnitConstants::mm, "Maximum d0 of tracks to seed."};
 
-	Gaudi::Property<StringVec> m_seedFinding_zBinEdges{this, "SeedFinding_zBinEdges", StringVec(0), "Bins placement along Z for seeding."};
+	std::vector<std::string> default_value;	
+	Gaudi::Property<std::vector<std::string>> m_seedFinding_zBinEdges{this, "SeedFinding_zBinEdges", default_value, "Bins placement along Z for seeding."};
 	Gaudi::Property<int> m_zTopBinLen{this, "SeedFinding_zTopBinLen", 1, "Number of top bins along Z for seeding."};
 	Gaudi::Property<int> m_zBottomBinLen{this, "SeedFinding_zBottomBinLen", 1, "Number of bottom bins along Z for seeding."};
 	Gaudi::Property<int> m_phiTopBinLen{this, "SeedFinding_phiTopBinLen", 1, "Number of top bins along phi for seeding."};
@@ -64,10 +72,10 @@ protected:
 	Gaudi::Property<int32_t> m_CKF_numMeasurementsCutOff{this, "CKF_NumMeasurementsCutOff", 10, "Maximum number of associated measurements on a single surface."};
 
 	// Seeding configuration
-	Gaudi::Property<std::vector<std::string>> m_seedingLayers{this, "SeedingLayers", "Layers to use for seeding in vector."};
-	ACTSTracking::GeometryIdSelectorm_seedGeometrySelection;
+	Gaudi::Property<std::vector<std::string>> m_seedingLayers{this, "SeedingLayers", default_value, "Layers to use for seeding in vector."};
+	ACTSTracking::GeometryIdSelector m_seedGeometrySelection;
 
-	uint32_t m_fitFails;
+	//uint32_t m_fitFails;
 };
 
 #endif

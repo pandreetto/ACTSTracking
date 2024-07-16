@@ -37,7 +37,7 @@
  * @author Karol Krizka, Samuel Ferraro
  * @version $Id$
  */
-struct ACTSAlgBase final : Gaudi::Functional::MultiTransformer<std::tuple<
+struct ACTSAlgBase : Gaudi::Functional::MultiTransformer<std::tuple<
 		    edm4hep::TrackCollection, 
 		    edm4hep::TrackCollection>(
 		    const edm4hep::TrackerHitPlaneCollection &)> {
@@ -46,8 +46,8 @@ struct ACTSAlgBase final : Gaudi::Functional::MultiTransformer<std::tuple<
 
 public:
 	ACTSAlgBase(const std::string& name, ISvcLocator* svcLoc);
-private:
 	StatusCode initialize();
+private:
 	void buildDetector();
 	void buildBfield();
 

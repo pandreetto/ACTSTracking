@@ -100,8 +100,15 @@ uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::SimTrackerHit& hit)
 			     fieldValues["sensor"]);
 }
 
+uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::TrackerHitPlane& hit) {
+	return GeometryIdMappingTool::getGeometryIDTrack(hit.cellID());
+}
+
 uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::TrackerHit& hit) {
-	uint64_t cellID = hit.cellID();
+        return GeometryIdMappingTool::getGeometryIDTrack(hit.cellID());
+}
+
+uint64_t GeometryIdMappingTool::getGeometryIDTrack(uint64_t cellID) {
 	std::unordered_map<std::string, unit32_t> fieldValues;
 
 	for (const auto& field: m_encoderFields) {
