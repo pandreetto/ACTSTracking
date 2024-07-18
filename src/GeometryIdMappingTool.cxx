@@ -85,12 +85,12 @@ GeometryIdMappingTool::GeometryIdMappingTool(const std::string& encoderString) {
 }
 
 uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::SimTrackerHit& hit) {
-	uint64_t cellID = hit.cellID();
-	std::unordered_map<std::string, unit32_t> fieldValues;
+	uint64_t cellID = hit.getCellID();
+	std::unordered_map<std::string, uint32_t> fieldValues;
 
 	for (const auto& field: m_encoderFields) {
 		uint32_t val = (cellID >> field.shift) & ((1 << field.length) -1);
-		fieldValues[field.name] = value;
+		fieldValues[field.name] = val;
 	}
 	
 	return getGeometryID(fieldValues["system"], 
@@ -101,19 +101,19 @@ uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::SimTrackerHit& hit)
 }
 
 uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::TrackerHitPlane& hit) {
-	return GeometryIdMappingTool::getGeometryIDTrack(hit.cellID());
+	return GeometryIdMappingTool::getGeometryIDTrack(hit.getCellID());
 }
 
 uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::TrackerHit& hit) {
-        return GeometryIdMappingTool::getGeometryIDTrack(hit.cellID());
+        return GeometryIdMappingTool::getGeometryIDTrack(hit.getCellID());
 }
 
 uint64_t GeometryIdMappingTool::getGeometryIDTrack(uint64_t cellID) {
-	std::unordered_map<std::string, unit32_t> fieldValues;
+	std::unordered_map<std::string, uint32_t> fieldValues;
 
 	for (const auto& field: m_encoderFields) {
 		uint32_t val = (cellID >> field.shift) & ((1 << field.length) -1);
-		fieldValues[field.name] = value;
+		fieldValues[field.name] = val;
 	}
 	
 	return getGeometryID(fieldValues["system"], 

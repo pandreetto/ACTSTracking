@@ -5,7 +5,6 @@
 
 #include <vector>
 #include <memory>
-#include <stdexecpt>
 
 #include <Acts/Utilities/Result.h>
 #include <Acts/MagneticField/InterpolatedBFieldMap.hpp>
@@ -160,20 +159,12 @@ edm4hep::TrackState ACTS2edm4hep_trackState(int location,
 
 	Acts::ActsMatrix<6, 6> trcov = (jac * cov * jac.transpose());
 
-	trackState.setCovMatrix(trcov(0, 0), edm4hep::TrackParams::d0, edm4hep::TrackParams::d0);
-	trackState.setCovMatrix(trcov(0, 1), edm4hep::TrackParams::d0, edm4hep::TrackParams::phi);
-	trackState.setCovMatrix(trcov(1, 1), edm4hep::TrackParams::phi, edm4hep::TrackParams::phi);
-	trackState.setCovMatrix(trcov(0, 2), edm4hep::TrackParams::d0, edm4hep::TrackParams::omega);
-	trackState.setCovMatrix(trcov(1, 2), edm4hep::TrackParams::phi, edm4hep::TrackParams::omega);
-	trackState.setCovMatrix(trcov(2, 2), edm4hep::TrackParams::omega, edm4hep::TrackParams::omega);
-	trackState.setCovMatrix(trcov(0, 3), edm4hep::TrackParams::d0, edm4hep::TrackParams::z0);
-	trackState.setCovMatrix(trcov(1, 3), edm4hep::TrackParams::phi, edm4hep::TrackParams::z0);
-	trackState.setCovMatrix(trcov(2, 3), edm4hep::TrackParams::omega, edm4hep::TrackParams::z0);
-	trackState.setCovMatrix(trcov(3, 3), edm4hep::TrackParams::z0, edm4hep::TrackParams::z0);
-	trackState.setCovMatrix(trcov(1, 4), edm4hep::TrackParams::d0, edm4hep::TrackParams::tanLambda);
-	trackState.setCovMatrix(trcov(2, 4), edm4hep::TrackParams::phi, edm4hep::TrackParams::tanLambda);
-	trackState.setCovMatrix(trcov(3, 4), edm4hep::TrackParams::omega, edm4hep::TrackParams::tanLambda);
-	trackState.setCovMatrix(trcov(4, 4), edm4hep::TrackParams::tanLambda, edm4hep::TrackParams::tanLambda);
+
+	for (int i = 0; i < 6; ++i) {
+		for (int j = 0; j < 6; ++j) {
+			trackState.covMatrix[i*6 + j] = trcov(i, j)
+		}
+	}
 	
 	return trackState;
 }

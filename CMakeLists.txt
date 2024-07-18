@@ -34,12 +34,12 @@ ADD_SUBDIRECTORY(example)
 CONFIGURE_FILE(src/config.h.in config.h)
 ADD_LIBRARY(ACTSTracking SHARED
 	./src/ACTSAlgBase.cxx
-	./src/ACTSSeededCKFTrackingAlg.cxx
 	./src/ACTSDuplicateRemoval.cxx
 	./src/TrackTruthAlg.cxx
 	./src/GeometryIdSelector.cxx
 	./src/GeometryIdMappingTool.cxx
 	./src/Helpers.cxx
+	./src/ACTSSeededCKFTrackingAlg.cxx
   )
 TARGET_INCLUDE_DIRECTORIES(ACTSTracking
   PRIVATE

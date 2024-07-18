@@ -40,7 +40,7 @@ bool track_quality_compare(const edm4hep::Track& trk1, const edm4hep::Track& trk
 }
 
 inline bool track_duplicate_compare(const edm4hep::Track& trk1, const edm4hep::Track& trk2) {
-	return trk1.getTrackState(edm4hep::TrackState::AtIP).tanLambda < trk2.getTrackState(edm4hep::TrackState::AtIP).tanLambda;
+	return trk1.getTrackStates(edm4hep::TrackState::AtIP).tanLambda < trk2.getTrackStates(edm4hep::TrackState::AtIP).tanLambda;
 }
 }  // namespace ACTSTracking
 
@@ -52,31 +52,36 @@ ACTSDuplicateRemoval::ACTSDuplicateRemoval(const std::string& name, ISvcLocator*
 
 edm4hep::TrackCollection ACTSDuplicateRemoval::operator()(const edm4hep::TrackCollection& trackCollection) const{
 	// Make output collection
-	auto outputTracks = new edm4hep::TrackCollection();
+	edm4hep::TrackCollection outputTracks;
 
 	// Insertion sort input tracks
 	std::vector<edm4hep::Track> sortedInput;
-	for (const auto& track : *inputTracks) {
+	for (const auto& track : trackCollection) {
 		auto insertion_point = std::upper_bound(sortedInput.begin(), sortedInput.end(), track, ACTSTracking::track_duplicate_compare);
 		sortedInput.insert(insertion_point, track);
 	}
 	
 	// Loop through all inputs and search for nearby equals
 	// Remove if they are too similar
+	std::vector<edm4hep::Track> finalTracks;
 	for (const auto& track : sortedInput) {
 		bool foundAnEqual = false;
-		for (int i = (outputTracks.size() >= 10) ? outputTracks.size() - 10: 0; i < outputTracks.size(); ++i) {
-			const auto& otherTrack = outputTracks[i];
+		for (int i = (finalTracks.size() >= 10) ? finalTracks.size() - 10: 0; i < finalTracks.size(); ++i) {
+			const auto& otherTrack = finalTracks[i];
 			if (!ACTSTracking::tracks_equal(track, otherTrack)) continue;
 			foundAnEqual = true;
 			if (ACTSTracking::track_quality_compare(track, otherTrack)) {
-				outputTracks[i] = track;
+				finalTracks[i] = track;
 				break;
 			}
 		}
 		if (!foundAnEqual) {
-			outputTracks.push_back(track);
+			finalTracks.push_back(track);
 		}
+	}
+
+	for (const auto& track : finalTracks) {
+		outputTracks.push_back(track);
 	}
 
 	return outputTracks;
