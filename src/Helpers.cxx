@@ -6,7 +6,6 @@
 #include <vector>
 #include <memory>
 
-#include <Acts/Utilities/Result.h>
 #include <Acts/MagneticField/InterpolatedBFieldMap.hpp>
 
 #include <filesystem>
@@ -68,7 +67,7 @@ edm4hep::Track ACTS2edm4hep_track(const TrackResult& fitter_res,
 		if (!trk_state.hasUncalibratedSourceLink()) continue;
 
 		auto sl = trk_state.getUncalibratedSourceLink().get<ACTSTracking::SourceLink>();
-		edm4hep::TrackerHit curr_hit = sl.edmhit();
+		edm4hep::TrackerHit curr_hit = sl.edm4hepTHit();
 		hitsOnTrack.push_back(curr_hit);
 
 		const Acts::Vector3 hitPos(curr_hit.getPosition().x, 
@@ -140,7 +139,7 @@ edm4hep::TrackState ACTS2edm4hep_trackState(int location,
 	trackState.phi = phi;
 	trackState.tanLambda = tanlambda;
 	trackState.omega = omega;
-	trackStates.D0 = d0;
+	trackState.D0 = d0;
 	trackState.Z0 = z0;
 
 	// Uncertainties (covariance matrix)
@@ -162,7 +161,7 @@ edm4hep::TrackState ACTS2edm4hep_trackState(int location,
 
 	for (int i = 0; i < 6; ++i) {
 		for (int j = 0; j < 6; ++j) {
-			trackState.covMatrix[i*6 + j] = trcov(i, j)
+			trackState.covMatrix[i*6 + j] = trcov(i, j);
 		}
 	}
 	

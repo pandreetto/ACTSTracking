@@ -44,7 +44,7 @@ class SeedSpacePoint {
 
   const std::optional<float> t() const
   {
-    return m_sourceLink.edm4hephit().getTime();
+    return m_sourceLink.edm4hepTHitP().getTime();
   }
   // TODO missing: const std::optional<float> varianceT() const
 
