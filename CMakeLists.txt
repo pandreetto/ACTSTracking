@@ -1,28 +1,7 @@
 ########################################################
-# cmake file for building Marlin ACTSTracking Package
-# @author Karol Krizka, Samuel Ferraro
-CMAKE_MINIMUM_REQUIRED(VERSION 3.15 FATAL_ERROR)
+# cmake file for building Gaudi ACTSTracking Package
+# @author Samuel Ferraro
 ########################################################
-
-# project name
-PROJECT( ACTSTracking VERSION 2.0.0 )
-
-### DEPENDENCIES ############################################################
-FIND_PACKAGE( Gaudi REQUIRED )
-FIND_PACKAGE( EDM4HEP REQUIRED )
-FIND_PACKAGE( DD4hep REQUIRED COMPONENTS DDCore )
-FIND_PACKAGE( ROOT REQUIRED )
-FIND_PACKAGE( Acts REQUIRED COMPONENTS Core PluginJson PluginTGeo )
-FIND_PACKAGE( k4FWCore REQUIRED )
-INCLUDE(GNUInstallDirs)
-
-### DOCUMENTATION ###########################################################
-
-OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
-
-IF( INSTALL_DOC AND EXISTS "${PROJECT_SOURCE_DIR}/doc/CMakeLists.txt" )
-    ADD_SUBDIRECTORY( ./doc )
-ENDIF()
 
 ### DATA ###########################################################
 ADD_SUBDIRECTORY(data)
@@ -32,30 +11,33 @@ ADD_SUBDIRECTORY(example)
 
 # sources
 CONFIGURE_FILE(src/config.h.in config.h)
-ADD_LIBRARY(ACTSTracking SHARED
-	./src/ACTSAlgBase.cxx
-	./src/ACTSDuplicateRemoval.cxx
-	./src/ACTSMergeHitCollections.cxx
-	./src/ACTSMergeRelationCollections.cxx
-	./src/TrackTruthAlg.cxx
-	./src/GeometryIdSelector.cxx
-	./src/GeometryIdMappingTool.cxx
-	./src/Helpers.cxx
-	./src/ACTSSeededCKFTrackingAlg.cxx
-  )
-TARGET_INCLUDE_DIRECTORIES(ACTSTracking
-  PRIVATE
-    ./ACTSTracking
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${Gaudi_INCLUDE_DIRS}
-    ${ROOT_INCLUDE_DIRS})
-TARGET_LINK_LIBRARIES(ACTSTracking
-  ${ROOT_LIBRARIES}
-  k4FWCore::k4FWCore 
-  DD4hep::DDCore
-  Gaudi::GaudiKernel
-  Gaudi::GaudiAlgLib
-  EDM4HEP::edm4hep
-  ActsCore ActsPluginTGeo ActsPluginJson)
+FILE( GLOB _plugin_sources src/*.cxx )
+gaudi_add_module(ACTSTrackingPlugins
+		SOURCES ${_plugin_sources}
+		LINK	${ROOT_LIBRARIES}
+			k4FWCore::k4FWCore
+			DD4hep::DDCore
+			Gaudi::GaudiKernel
+			Gaudi::GaudiAlgLib
+			EDM4HEP::edm4hep
+			ActsCore ActsPluginTGeo ActsPluginJson)
 
-INSTALL( TARGETS ACTSTracking DESTINATION lib )
+INSTALL( TARGETS ACTSTrackingPlugins 
+	EXPORT ${CMAKE_PROJECT_NAME}Targets
+	RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin 
+	LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
+	PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/@{CMAKE_PROJECT_NAME}"
+	COMPONENT dev )
+
+TARGET_INCLUDE_DIRECTORIES(ACTSTrackingPlugins
+		PRIVATE	./ACTSTracking
+			${CMAKE_CURRENT_BINARY_DIR}
+    			${Gaudi_INCLUDE_DIRS}
+    			${ROOT_INCLUDE_DIRS})
+
+SET( GAUDI_GENCONF_DIR "genConfDir" )
+if (${Gaudi_VERSION} VERSION_LESS 35.1)
+	SET( GAUDI_GENCONF_DIR "genConf" )
+endif()
+
+
