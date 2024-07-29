@@ -35,6 +35,8 @@ CONFIGURE_FILE(src/config.h.in config.h)
 ADD_LIBRARY(ACTSTracking SHARED
 	./src/ACTSAlgBase.cxx
 	./src/ACTSDuplicateRemoval.cxx
+	./src/ACTSMergeHitCollections.cxx
+	./src/ACTSMergeRelationCollections.cxx
 	./src/TrackTruthAlg.cxx
 	./src/GeometryIdSelector.cxx
 	./src/GeometryIdMappingTool.cxx
@@ -57,4 +59,3 @@ TARGET_LINK_LIBRARIES(ACTSTracking
   ActsCore ActsPluginTGeo ActsPluginJson)
 
 INSTALL( TARGETS ACTSTracking DESTINATION lib )
-
