@@ -16,21 +16,21 @@
  * @version $Id$
  */
 struct ACTSMergeHitCollections final : Gaudi::Functional::MultiTransformer<std::tuple<edm4hep::TrackerHitPlaneCollection>(
-		const edm4hep::TrackerHitPlaneCollection &,
-		const edm4hep::TrackerHitPlaneCollection &,
-		const edm4hep::TrackerHitPlaneCollection &,
-		const edm4hep::TrackerHitPlaneCollection &,
-		const edm4hep::TrackerHitPlaneCollection &,
-		const edm4hep::TrackerHitPlaneCollection &)> {
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &)> {
 public:
 	ACTSMergeHitCollections(const std::string& name, ISvcLocator* svcLoc);
 
 	std::tuple<edm4hep::TrackerHitPlaneCollection> operator()(
-		const edm4hep::TrackerHitPlaneCollection& col1,
-                const edm4hep::TrackerHitPlaneCollection& col2,
-                const edm4hep::TrackerHitPlaneCollection& col3,
-                const edm4hep::TrackerHitPlaneCollection& col4,
-                const edm4hep::TrackerHitPlaneCollection& col5,
-                const edm4hep::TrackerHitPlaneCollection& col6) const override;
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col1,
+                const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col2,
+                const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col3,
+                const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col4,
+                const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col5,
+                const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col6) const override;
 };
 #endif // ACTSMergeHitCollections_h

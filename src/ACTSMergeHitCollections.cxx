@@ -16,16 +16,18 @@ ACTSMergeHitCollections::ACTSMergeHitCollections(const std::string& name, ISvcLo
 	      { KeyValue("OutputCollection", "MergedCollection") }) {}
 
 std::tuple<edm4hep::TrackerHitPlaneCollection> ACTSMergeHitCollections::operator()(
-		const edm4hep::TrackerHitPlaneCollection& col1,
-		const edm4hep::TrackerHitPlaneCollection& col2,
-		const edm4hep::TrackerHitPlaneCollection& col3,
-		const edm4hep::TrackerHitPlaneCollection& col4,
-		const edm4hep::TrackerHitPlaneCollection& col5,
-		const edm4hep::TrackerHitPlaneCollection& col6) const{
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col1,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col2,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col3,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col4,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col5,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col6) const{
 	edm4hep::TrackerHitPlaneCollection mergedCollection;
 
-	for (const auto& col : {&col1, &col2, &col3, &col4, &col5, &col6}) {
-		for (const auto& item : *col) { mergedCollection.push_back(item); }
+	for (const auto& col : {col1.getData(), col2.getData(), col3.getData(), col4.getData(), col5.getData(), col6.getData()}) {
+		for (const auto& item : *col) {
+			(void)mergedCollection->create(item.getCellID(), item.getType(), item.getQuality(), item.getTime(), item.getEDep(), item.getEDepError(), item.getU(), item.getV(), item.getDu(), item.getDv(), item.getPosition(), item.getCovMatrix());
+		}
 	}
 
 	return std::make_tuple(std::move(mergedCollection));

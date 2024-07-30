@@ -1,6 +1,6 @@
 #include "ACTSMergeRelationCollections.hxx"
 
-#include <edm4hep/MCRecoTrackParticleAssociation.h>
+#include <edm4hep/MCRecoTrackerHitPlaneAssociation.h>
 
 
 DECLARE_COMPONENT(ACTSMergeRelationCollections)
@@ -15,17 +15,21 @@ ACTSMergeRelationCollections::ACTSMergeRelationCollections(const std::string& na
 		KeyValue("InputCollection6", "Collection6") },
 	      { KeyValue("OutputCollection", "MergedCollection") }) {}
 
-std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> ACTSMergeRelationCollections::operator()(
-		const edm4hep::MCRecoTrackParticleAssociationCollection& col1,
-		const edm4hep::MCRecoTrackParticleAssociationCollection& col2,
-		const edm4hep::MCRecoTrackParticleAssociationCollection& col3,
-		const edm4hep::MCRecoTrackParticleAssociationCollection& col4,
-		const edm4hep::MCRecoTrackParticleAssociationCollection& col5,
-		const edm4hep::MCRecoTrackParticleAssociationCollection& col6) const{
-	edm4hep::MCRecoTrackParticleAssociationCollection mergedCollection;
+std::tuple<edm4hep::MCRecoTrackerHitPlaneAssociationCollection> ACTSMergeRelationCollections::operator()(
+		const DataWrapper<edm4hep::MCRecoTrackerHitPlaneAssociationCollection>& col1,
+		const DataWrapper<edm4hep::MCRecoTrackerHitPlaneAssociationCollection>& col2,
+		const DataWrapper<edm4hep::MCRecoTrackerHitPlaneAssociationCollection>& col3,
+		const DataWrapper<edm4hep::MCRecoTrackerHitPlaneAssociationCollection>& col4,
+		const DataWrapper<edm4hep::MCRecoTrackerHitPlaneAssociationCollection>& col5,
+		const DataWrapper<edm4hep::MCRecoTrackerHitPlaneAssociationCollection>& col6) const{
+	edm4hep::MCRecoTrackerHitPlaneAssociationCollection mergedCollection;
 
-	for (const auto& col : {&col1, &col2, &col3, &col4, &col5, &col6}) {
-		for (const auto& item : *col) { mergedCollection.push_back(item); }
+	for (const auto& col : {col1.getData(), col2.getData(), col3.getData(), col4.getData(), col5.getData(), col6.getData()}) {
+		for (const auto& item : *col) {
+			auto link = mergedCollection->create(item.getWeight());
+			link.setRec(item.getRec());
+			link.setSim(item.getSim());
+		}
 	}
 
 	return std::make_tuple(std::move(mergedCollection));
