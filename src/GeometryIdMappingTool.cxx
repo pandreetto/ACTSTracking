@@ -91,8 +91,8 @@ uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::SimTrackerHit& hit)
 
 	return getGeometryID(m_decoder("system").value(), 
 			     m_decoder("layer").value(), 
-			     m_decoder("side").value(), 
-			     m_decoder("module").value(), 
+			     m_decoder("side").value(),
+			     m_decoder("module").value(),
 			     m_decoder("sensor").value());
 }
 
@@ -110,7 +110,7 @@ uint64_t GeometryIdMappingTool::getGeometryIDTrack(uint64_t cellID) {
         return getGeometryID(m_decoder("system").value(),    
                              m_decoder("layer").value(),
                              m_decoder("side").value(),
-                             m_decoder("module").value(),
+			     m_decoder("module").value(),
                              m_decoder("sensor").value());
 
 }
@@ -125,7 +125,7 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
   //
   // Volume ID determination.
 
-  std::cout << systemID << std::endl << layerID << std::endl << sideID << std::endl << ladderID << std::endl << moduleID <<std::endl;
+  std::cout << "System: "<< systemID << std::endl << "Layer: " << layerID << std::endl << "Side: " << sideID << std::endl << "Ladder: " << ladderID << std::endl << "Module: " << moduleID <<std::endl;
   // the outermost layer of InnerTracker is "OuterInnerTracker" in ACTS
   if (systemID == InnerTrackerBarrel && layerID == 2) {
     systemID = OuterInnerTrackerBarrel;

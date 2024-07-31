@@ -90,7 +90,7 @@ std::tuple<edm4hep::TrackCollection,
 		auto hit = trackerHitCollection.at(i);
 		sortedHits.push_back(std::make_pair(geoIDMappingTool()->getGeometryID(hit), &hit));
 	}
-	std::cout << "1" << std::endl;
+
 	// Sort by GeoID
 	std::sort(
 		sortedHits.begin(), sortedHits.end(),
