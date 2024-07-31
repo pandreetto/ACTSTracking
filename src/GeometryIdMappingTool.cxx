@@ -68,36 +68,32 @@ const std::unordered_map<int32_t, uint32_t> GeometryIdMappingTool::VolumeMap = {
     {OuterTrackerEndCapPositive, 25},
 };
 
-GeometryIdMappingTool::GeometryIdMappingTool(const std::string& encoderString) {
-	std::stringstream ss(encoderString);
-	std::string token;
-	int currentShift = 0;
+GeometryIdMappingTool::GeometryIdMappingTool(const std::string& encoderString) 
+	: m_decoder(encoderString) {
+	//std::stringstream ss(encoderString);
+	//std::string token;
+	//int currentShift = 0;
 
-	while (std::getline(ss, token, ',')) {
-		std::stringstream tokenStream(token);
-		std::string name;
-		int length;
-		std::getline(tokenStream, name, ':');
-		tokenStream >> length;
-		m_encoderFields.push_back({name, length, currentShift});
-		currentShift += length;
-	}
+//	while (std::getline(ss, token, ',')) {
+//		std::stringstream tokenStream(token);
+//		std::string name;
+//		int length;
+//		std::getline(tokenStream, name, ':');
+//		tokenStream >> length;
+//		m_encoderFields.push_back({name, length, currentShift});
+//		currentShift += length;
+//	}
 }
 
 uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::SimTrackerHit& hit) {
 	uint64_t cellID = hit.getCellID();
-	std::unordered_map<std::string, uint32_t> fieldValues;
+	m_decoder.setValue(cellID);
 
-	for (const auto& field: m_encoderFields) {
-		uint32_t val = (cellID >> field.shift) & ((1 << field.length) -1);
-		fieldValues[field.name] = val;
-	}
-	
-	return getGeometryID(fieldValues["system"], 
-			     fieldValues["layer"], 
-			     fieldValues["side"], 
-			     fieldValues["module"], 
-			     fieldValues["sensor"]);
+	return getGeometryID(m_decoder("system").value(), 
+			     m_decoder("layer").value(), 
+			     m_decoder("side").value(), 
+			     m_decoder("module").value(), 
+			     m_decoder("sensor").value());
 }
 
 uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::TrackerHitPlane& hit) {
@@ -109,18 +105,14 @@ uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::TrackerHit& hit) {
 }
 
 uint64_t GeometryIdMappingTool::getGeometryIDTrack(uint64_t cellID) {
-	std::unordered_map<std::string, uint32_t> fieldValues;
+	m_decoder.setValue(cellID);
 
-	for (const auto& field: m_encoderFields) {
-		uint32_t val = (cellID >> field.shift) & ((1 << field.length) -1);
-		fieldValues[field.name] = val;
-	}
-	
-	return getGeometryID(fieldValues["system"], 
-			     fieldValues["layer"], 
-			     fieldValues["side"], 
-			     fieldValues["module"], 
-			     fieldValues["sensor"]);
+        return getGeometryID(m_decoder("system").value(),    
+                             m_decoder("layer").value(),
+                             m_decoder("side").value(),
+                             m_decoder("module").value(),
+                             m_decoder("sensor").value());
+
 }
 
 uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
@@ -133,6 +125,7 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
   //
   // Volume ID determination.
 
+  std::cout << systemID << std::endl << layerID << std::endl << sideID << std::endl << ladderID << std::endl << moduleID <<std::endl;
   // the outermost layer of InnerTracker is "OuterInnerTracker" in ACTS
   if (systemID == InnerTrackerBarrel && layerID == 2) {
     systemID = OuterInnerTrackerBarrel;

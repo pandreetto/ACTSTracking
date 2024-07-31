@@ -4,17 +4,13 @@
 #include <edm4hep/TrackerHit.h>
 #include <edm4hep/TrackerHitPlane.h>
 
+#include "CellIDDecoder.hxx"
+
 #include <string>
 #include <vector>
 #include <unordered_map>
 
 namespace ACTSTracking {
-
-struct Field {
-	std::string name;
-	int length;
-	int shift;
-};
 
 //! \brief Maps DD4hep cell ID's to ACTS geometry ID's
 /**
@@ -42,7 +38,7 @@ public:
 		uint32_t ladderID, uint32_t moduleID);
 
 private:
-	std::vector<Field> m_encoderFields;
+	CellIDDecoder m_decoder;
 
 	static const std::unordered_map<int32_t, uint32_t> VolumeMap;
 

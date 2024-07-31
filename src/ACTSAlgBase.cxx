@@ -79,7 +79,7 @@ StatusCode ACTSAlgBase::initialize() {
 	<< " -------------------------------------" << endmsg;
 
 	// Initialize mapping tool
-	m_geoIDMappingTool = std::make_shared<GeometryIdMappingTool>("subdet:5,side:-2,layer:9,module:8,sensor:8");
+	m_geoIDMappingTool = std::make_shared<GeometryIdMappingTool>("system:5,side:-2,layer:6,module:11,sensor:8");
 	return StatusCode::SUCCESS;
 }
 

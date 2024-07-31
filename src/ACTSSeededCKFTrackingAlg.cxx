@@ -90,7 +90,7 @@ std::tuple<edm4hep::TrackCollection,
 		auto hit = trackerHitCollection.at(i);
 		sortedHits.push_back(std::make_pair(geoIDMappingTool()->getGeometryID(hit), &hit));
 	}
-
+	std::cout << "1" << std::endl;
 	// Sort by GeoID
 	std::sort(
 		sortedHits.begin(), sortedHits.end(),
@@ -98,7 +98,8 @@ std::tuple<edm4hep::TrackCollection,
 		   const std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane*>& hit1) -> bool { 
 			return hit0.first < hit1.first; 
 		});
-
+	std::cout << "2" << std::endl;
+	
 	// Turn the edm4hep TrackerHit's into Acts objects
 	// Assumes that the hits are sorted by the GeoID
 	ACTSTracking::SourceLinkContainer sourceLinks;
@@ -126,13 +127,15 @@ std::tuple<edm4hep::TrackCollection,
 		} else {
 			throw std::runtime_error("Currently only support TrackerHitPlane.");
 		}
-
+		std::cout << "3" << std::endl;
+		
 		ACTSTracking::SourceLink sourceLink(surface->geometryId(), measurements.size(), *hitPair.second);
 		Acts::SourceLink src_wrap { sourceLink };
 		Acts::Measurement meas = Acts::makeMeasurement(src_wrap, loc, localCov, Acts::eBoundLoc0, Acts::eBoundLoc1);
 
 		measurements.push_back(meas);
 		sourceLinks.emplace_hint(sourceLinks.end(), sourceLink);
+		std::cout << "4" << std::endl;
 
 		// Seed selection and conversion to useful coordinates
 		if (m_seedGeometrySelection.check(surface->geometryId())) {
