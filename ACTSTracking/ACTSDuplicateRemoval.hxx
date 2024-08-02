@@ -38,8 +38,8 @@ namespace ACTSTracking {
  * 2. is only run with 1. is ambigious.
  */
 	bool track_duplicate_compare(const edm4hep::Track& trk1, const edm4hep::Track& trk2);
-	bool tracks_quality_compart(const edm4hep::Track& trk1, edm4hep::Track& trk2);
-	bool tracks_equal(const edm4hep::Track& trk1, edm4hep::Track& trk2);
+
+
 }  // namespace ACTSTracking
 
 #endif

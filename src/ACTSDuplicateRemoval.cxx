@@ -1,5 +1,5 @@
 #include "ACTSDuplicateRemoval.hxx"
-
+#include <GaudiKernel/MsgStream.h>
 #include <edm4hep/TrackerHit.h>
 #include <edm4hep/MutableTrack.h>
 
@@ -9,6 +9,7 @@
 namespace ACTSTracking {
 /**
  * Return true if `trk1` and `trk2` share at least 50% of hits.
+ * @TODO: I do not like hte way this had to be implemented. Find doesn't seem to play nice... Maybe with TrackerHits maybe with podio::RelationRange
  */
 inline bool tracks_equal(const edm4hep::Track& trk1, const edm4hep::Track& trk2) {
 	const auto& hits1 = trk1.getTrackerHits();
@@ -17,8 +18,10 @@ inline bool tracks_equal(const edm4hep::Track& trk1, const edm4hep::Track& trk2)
 	// Number of overlapping hist
 	uint32_t hitOlap = 0;
 	for (const auto& hit1 : hits1) {
-		if (std::find(hits2.begin(), hits2.end(), hit1) != hits2.end()) {
-			hitOlap++;
+		for (const auto& hit2 : hits2) {
+			if (hit1.getCellID() == hit2.getCellID() && hit1.getType() == hit2.getType() &&
+                            hit1.getQuality() == hit2.getQuality() && hit1.getTime() == hit2.getTime() &&
+                            hit1.getPosition() == hit2.getPosition()) { hitOlap++; }
 		}
 	}
 
@@ -53,6 +56,7 @@ ACTSDuplicateRemoval::ACTSDuplicateRemoval(const std::string& name, ISvcLocator*
 				KeyValue("OutputTrackCollectionName", "DedupedTruthTracks")) {}
 
 edm4hep::TrackCollection ACTSDuplicateRemoval::operator()(const edm4hep::TrackCollection& trackCollection) const{
+	MsgStream log(msgSvc(), name());
 	// Make output collection
 	edm4hep::TrackCollection outputTracks;
 
@@ -63,25 +67,35 @@ edm4hep::TrackCollection ACTSDuplicateRemoval::operator()(const edm4hep::TrackCo
 		sortedInput.insert(insertion_point, track);
 	}
 	
+	int total = 0;
+	int dupes = 0;
+	int added = 0;
 	// Loop through all inputs and search for nearby equals
 	// Remove if they are too similar
+	std::vector<edm4hep::Track> finalTracks;
 	for (const auto& track : sortedInput) {
+		total++;
 		bool foundAnEqual = false;
-		int startIdx = (outputTracks.size() >= 10) ? outputTracks.size() - 10 : 0;
-		for (int i = startIdx; i < outputTracks.size(); ++i) {
-			auto otherTrack = outputTracks[i];
+		int startIdx = (finalTracks.size() >= 10) ? finalTracks.size() - 10 : 0;
+		for (int i = startIdx; i < finalTracks.size(); ++i) {
+			auto otherTrack = finalTracks[i];
 			if (!ACTSTracking::tracks_equal(track, otherTrack)) continue;
 			foundAnEqual = true;
+			dupes++;
 			if (ACTSTracking::track_quality_compare(track, otherTrack)) {
-				auto trackRef = outputTracks.at(i);
-				ACTSTracking::makeMutableTrack(&track, &trackRef);
+				finalTracks[i] = track;
 				break;
 			}
 		}
 		if (!foundAnEqual) {
-			auto newTrack = outputTracks.create();
-			ACTSTracking::makeMutableTrack(&track, &newTrack);
+			added++;
+			finalTracks.push_back(track);
 		}
+	}
+
+	for (const auto& track : finalTracks) {
+		auto newTrack = outputTracks.create();
+		ACTSTracking::makeMutableTrack(&track, &newTrack);
 	}
 
 	return outputTracks;
