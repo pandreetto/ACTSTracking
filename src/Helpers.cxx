@@ -38,6 +38,19 @@ std::string findFile(const std::string& inpath) {
 	return inpath;
 }
 
+void makeMutableTrack(const edm4hep::Track* track, edm4hep::MutableTrack* newTrack) {
+	newTrack->setType(track->getType());
+	newTrack->setChi2(track->getChi2());
+	newTrack->setNdf(track->getNdf());
+	newTrack->setDEdx(track->getDEdx());
+	newTrack->setDEdxError(track->getDEdxError());
+	newTrack->setRadiusOfInnermostHit(track->getRadiusOfInnermostHit());
+	for (auto& hit : track->getTrackerHits())                 { newTrack->addToTrackerHits(hit); }
+	for (auto& otherTrack : track->getTracks())               { newTrack->addToTracks(otherTrack); }
+	for (auto& hitNumber : track->getSubdetectorHitNumbers()) { newTrack->addToSubdetectorHitNumbers(hitNumber); }
+	for (auto& state : track->getTrackStates())               { newTrack->addToTrackStates(state); }
+	for (auto& quantity : track->getDxQuantities())           { newTrack->addToDxQuantities(quantity); }
+}
 
 edm4hep::MutableTrack* ACTS2edm4hep_track(const TrackResult& fitter_res,
 				  std::shared_ptr<Acts::MagneticFieldProvider> magneticField,

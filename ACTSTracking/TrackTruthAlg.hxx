@@ -33,14 +33,12 @@
 
 struct TrackTruthAlg final : Gaudi::Functional::MultiTransformer<std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection>(
 			const edm4hep::TrackCollection &, 
-			const edm4hep::MCParticleCollection &, 
 			const edm4hep::MCRecoTrackerHitPlaneAssociationCollection &)> {
 public:
 	TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc);
 
 	std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> operator()(
-			const edm4hep::TrackCollection& tracks, 
-                        const edm4hep::MCParticleCollection& mcParticles,
+			const edm4hep::TrackCollection& tracks,
                         const edm4hep::MCRecoTrackerHitPlaneAssociationCollection& trackerHitRelations) const;
 };
 

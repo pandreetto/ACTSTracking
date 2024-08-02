@@ -4,6 +4,7 @@
 #include <edm4hep/MutableTrack.h>
 
 #include <algorithm>
+#include "Helpers.hxx"
 
 namespace ACTSTracking {
 /**
@@ -64,25 +65,23 @@ edm4hep::TrackCollection ACTSDuplicateRemoval::operator()(const edm4hep::TrackCo
 	
 	// Loop through all inputs and search for nearby equals
 	// Remove if they are too similar
-	std::vector<edm4hep::MutableTrack> finalTracks;
 	for (const auto& track : sortedInput) {
 		bool foundAnEqual = false;
-		for (int i = (finalTracks.size() >= 10) ? finalTracks.size() - 10: 0; i < finalTracks.size(); ++i) {
-			const auto& otherTrack = finalTracks[i];
+		int startIdx = (outputTracks.size() >= 10) ? outputTracks.size() - 10 : 0;
+		for (int i = startIdx; i < outputTracks.size(); ++i) {
+			auto otherTrack = outputTracks[i];
 			if (!ACTSTracking::tracks_equal(track, otherTrack)) continue;
 			foundAnEqual = true;
 			if (ACTSTracking::track_quality_compare(track, otherTrack)) {
-				finalTracks[i] = track;
+				auto trackRef = outputTracks.at(i);
+				ACTSTracking::makeMutableTrack(&track, &trackRef);
 				break;
 			}
 		}
 		if (!foundAnEqual) {
-			finalTracks.push_back(track);
+			auto newTrack = outputTracks.create();
+			ACTSTracking::makeMutableTrack(&track, &newTrack);
 		}
-	}
-
-	for (const auto& track : finalTracks) {
-		outputTracks.push_back(track);
 	}
 
 	return outputTracks;

@@ -1,8 +1,10 @@
 #pragma once
 
 #include <edm4hep/MCParticle.h>
+#include <edm4hep/Track.h>
 #include <edm4hep/MutableTrack.h>
 #include <edm4hep/TrackState.h>
+#include <edm4hep/TrackCollection.h>
 
 #include <GaudiKernel/MsgStream.h>
 #include <GaudiKernel/ServiceHandle.h>
@@ -44,9 +46,23 @@ using TrackResult = Acts::TrackContainer<Acts::VectorTrackContainer,
  */
 std::string findFile(const std::string& inpath);
 
+//! Converts edm4hep Track to edm4hep Mutable Track class
+/**
+ * Converted properties are:
+ *  - Type, chi2, ndf, DEdx, DEdxError, RadiusOfInnerMostHit
+ *  - All TrackerHits
+ *  - All associated Tracks
+ *  - All subdetector hit numbers
+ *  - All TrackStates
+ *  - Dx Qualities
+ * \param track Track to be converted
+ * \param newTrack MutableTrack to convert to
+ */
+void makeMutableTrack(const edm4hep::Track* track, edm4hep::MutableTrack* newTrack);
+
 //! Convert ACTS KF result to edm4hep track class
 /**
- * Converted propertie are:
+ * Converted properties are:
  *  - goodness of fit (chi2, ndf)
  *  - associated hits
  *  - track states at IP

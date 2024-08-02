@@ -15,13 +15,11 @@ DECLARE_COMPONENT(TrackTruthAlg)
 
 TrackTruthAlg::TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc, {
 		KeyValue("InputTrackCollectionName", "Tracks"),
-		KeyValue("InputMCParticleCollectionName", "MCParticle"),
 		KeyValue("InputTrackerHit2SimTrackerHitRelationName", "TrackMCRelation") },
 		{ KeyValue("OutputParticle2TrackRelationName", "Particle2TrackRelationName") })	{}
 
 std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::operator()(
 			const edm4hep::TrackCollection& tracks,
-                        const edm4hep::MCParticleCollection& mcParticles,
                         const edm4hep::MCRecoTrackerHitPlaneAssociationCollection& trackerHitRelations) const{
 	// Map TrackerHits to SimTrackerHits
 	std::map<edm4hep::TrackerHitPlane, edm4hep::SimTrackerHit> trackerHit2SimHit;
@@ -34,20 +32,24 @@ std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::ope
 	// Map best matches MCP to Track
 	std::map<edm4hep::MCParticle, edm4hep::Track> mcBestMatchTrack;
 	std::map<edm4hep::MCParticle, float> mcBestMatchFrac;
-/**
+
 	for (const auto& track: tracks) {
 		//Get Track
 		std::map<edm4hep::MCParticle, uint32_t> trackHit2Mc;
 		for (auto& hit : track.getTrackerHits()) {
 			//Search for SimHit
-			edm4hep::SimTrackerHit* simHit = nullptr;
-			const auto simHitIter = trackerHit2SimHit.find(hit);
-			if (simHitIter != trackerHit2SimHit.end()) { //Found SimHit
-				auto simHit = simHitIter->second;
-				break;
+			edm4hep::SimTrackerHit simHit;
+			/// @TODO: I am not happy with this. Again an edm4hep problem
+			for (const auto& pair : trackerHit2SimHit) {
+				if (pair.first.getCellID() == hit.getCellID() && pair.first.getType() == hit.getType() &&
+				    pair.first.getQuality() == hit.getQuality() && pair.first.getTime() == hit.getTime() &&
+				    pair.first.getPosition() == hit.getPosition()) {
+					simHit = pair.second;
+					break;
+				}
 			}
-			if (simHit->getMCParticle().isAvailable()) {
-				trackHit2Mc[simHit->getMCParticle()]++; //Increment MC Particle counter
+			if (simHit.getMCParticle().isAvailable()) {
+				trackHit2Mc[simHit.getMCParticle()]++; //Increment MC Particle counter
 			}
 		}
 
@@ -62,7 +64,7 @@ std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::ope
 			}
 		}
 	}
-*/
+
 	// Save the best matches
 	edm4hep::MCRecoTrackParticleAssociationCollection outColMC2T;
 	for (const auto& [mcParticle, track] : mcBestMatchTrack) {
