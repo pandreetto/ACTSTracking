@@ -40,11 +40,11 @@ class SeedSpacePoint {
   constexpr float varianceR() const { return m_varianceRho; }
   constexpr float varianceZ() const { return m_varianceZ; }
 
-  SourceLink sourceLink() const { return m_sourceLink; }
+  constexpr SourceLink sourceLink() const { return m_sourceLink; }
 
   const std::optional<float> t() const
   {
-    return m_sourceLink.edm4hepTHitP().getTime();
+    return m_sourceLink.edm4hepTHitP()->getTime();
   }
   // TODO missing: const std::optional<float> varianceT() const
 
@@ -61,7 +61,7 @@ class SeedSpacePoint {
   SourceLink m_sourceLink;
 };
 
-bool operator==(const SeedSpacePoint& lhs,
+constexpr bool operator==(const SeedSpacePoint& lhs,
                           const SeedSpacePoint& rhs) {
   // TODO would it be sufficient to check just the index under the assumption
   //   that the same measurement index always produces the same space point?

@@ -3,7 +3,6 @@
 #include <edm4hep/MCParticle.h>
 #include <edm4hep/SimTrackerHit.h>
 #include <edm4hep/TrackerHitPlane.h>
-#include <edm4hep/Track.h>
 #include <edm4hep/TrackState.h>
 #include <edm4hep/MutableTrack.h>
 
@@ -85,21 +84,19 @@ std::tuple<edm4hep::TrackCollection,
 	// from all of the subdetectors. Also include the Acts GeoId in
 	// the vector. It will be important for the sort to speed up the
 	// population of the final SourceLink multiset.
-	std::vector<std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane*>> sortedHits;
-	for (size_t i = 0; i < trackerHitCollection.size(); ++i) {
-		auto hit = trackerHitCollection.at(i);
-		sortedHits.push_back(std::make_pair(geoIDMappingTool()->getGeometryID(hit), &hit));
+	std::vector<std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane>> sortedHits;
+	for (const auto& hit : trackerHitCollection) {
+		sortedHits.push_back(std::make_pair(geoIDMappingTool()->getGeometryID(hit), hit));
 	}
 
 	// Sort by GeoID
 	std::sort(
 		sortedHits.begin(), sortedHits.end(),
-		[](const std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane*>& hit0,
-		   const std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane*>& hit1) -> bool { 
+		[](const std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane>& hit0,
+		   const std::pair<Acts::GeometryIdentifier, edm4hep::TrackerHitPlane>& hit1) -> bool { 
 			return hit0.first < hit1.first; 
 		});
-	std::cout << "2" << std::endl;
-	
+
 	// Turn the edm4hep TrackerHit's into Acts objects
 	// Assumes that the hits are sorted by the GeoID
 	ACTSTracking::SourceLinkContainer sourceLinks;
@@ -111,31 +108,30 @@ std::tuple<edm4hep::TrackCollection,
 		// Convert to Acts hit
 		const Acts::Surface* surface = trackingGeometry()->findSurface(hitPair.first);
 		if (surface == nullptr) throw std::runtime_error("Surface not found");
-
-		const edm4hep::Vector3d& edmglobalpos = hitPair.second->getPosition();
+		
+		const edm4hep::Vector3d& edmglobalpos = hitPair.second.getPosition();
 		Acts::Vector3 globalPos = {edmglobalpos.x, edmglobalpos.y, edmglobalpos.z};
+
 		Acts::Result<Acts::Vector2> lpResult = surface->globalToLocal(geometryContext(), globalPos, {0, 0, 0}, 0.5_um);
 		if (!lpResult.ok()) throw std::runtime_error("Global to local transformation did not succeed.");
 
 		Acts::Vector2 loc = lpResult.value();
 
 		Acts::SquareMatrix2 localCov = Acts::SquareMatrix2::Zero();
-		const edm4hep::TrackerHitPlane* hitplane = hitPair.second;
-		if (hitplane) {
-			localCov(0, 0) = std::pow(hitplane->getDu() * Acts::UnitConstants::mm, 2);
-			localCov(1, 1) = std::pow(hitplane->getDv() * Acts::UnitConstants::mm, 2);
+		const edm4hep::TrackerHitPlane hitplane = hitPair.second;
+		if (&hitplane) {
+			localCov(0, 0) = std::pow(hitplane.getDu() * Acts::UnitConstants::mm, 2);
+			localCov(1, 1) = std::pow(hitplane.getDv() * Acts::UnitConstants::mm, 2);
 		} else {
 			throw std::runtime_error("Currently only support TrackerHitPlane.");
 		}
-		std::cout << "3" << std::endl;
 		
-		ACTSTracking::SourceLink sourceLink(surface->geometryId(), measurements.size(), *hitPair.second);
+		ACTSTracking::SourceLink sourceLink(surface->geometryId(), measurements.size(), &hitPair.second);
 		Acts::SourceLink src_wrap { sourceLink };
 		Acts::Measurement meas = Acts::makeMeasurement(src_wrap, loc, localCov, Acts::eBoundLoc0, Acts::eBoundLoc1);
 
 		measurements.push_back(meas);
 		sourceLinks.emplace_hint(sourceLinks.end(), sourceLink);
-		std::cout << "4" << std::endl;
 
 		// Seed selection and conversion to useful coordinates
 		if (m_seedGeometrySelection.check(surface->geometryId())) {
@@ -341,7 +337,7 @@ std::tuple<edm4hep::TrackCollection,
 		up - finderCfg.deltaRMiddleMaxSPRange);                  // TODO investigate
 
 	std::vector<Acts::BoundTrackParameters> paramseeds;
-
+	
 	for (const auto [bottom, middle, top] : spacePointsGrouping) {
 		seeds.clear();
 
@@ -350,6 +346,7 @@ std::tuple<edm4hep::TrackCollection,
 
 		// Loop over seeds and get track parameters
 		paramseeds.clear();
+
 		for (const Acts::Seed<SSPoint> &seed : seeds) {
 			const SSPoint* bottomSP = seed.sp().front();
 
@@ -393,7 +390,7 @@ std::tuple<edm4hep::TrackCollection,
 			paramseeds.push_back(paramseed);
 
 			// Add seed to edm4hep collection
-			edm4hep::MutableTrack seedTrack;
+			edm4hep::MutableTrack seedTrack = seedCollection->create();
 
 			Acts::Vector3 globalPos = surface->localToGlobal(
 				geometryContext(), {params[Acts::eBoundLoc0], params[Acts::eBoundLoc1]}, {0, 0, 0});
@@ -403,18 +400,26 @@ std::tuple<edm4hep::TrackCollection,
 			if (!hitField.ok()) {
 				throw std::runtime_error("Field lookup error: " + hitField.error().value());
 			}
-	
-			edm4hep::TrackState seedTrackState = ACTSTracking::ACTS2edm4hep_trackState(
+
+			edm4hep::TrackState* seedTrackState = ACTSTracking::ACTS2edm4hep_trackState(
 					edm4hep::TrackState::AtFirstHit, paramseed, (*hitField)[2] / Acts::UnitConstants::T);;
 
 			// hits
 			for (const ACTSTracking::SeedSpacePoint *sp : seed.sp()) {
 				const ACTSTracking::SourceLink& sourceLink = sp->sourceLink();
-				seedTrack.addToTrackerHits(sourceLink.edm4hepTHit());
+				/// @TODO: This is a workaround. Once edm4hep TrackerHit Interface work. This shouldn't be needed
+				edm4hep::TrackerHit trackHit(sourceLink.edm4hepTHitP()->getCellID(),
+							     sourceLink.edm4hepTHitP()->getType(),
+							     sourceLink.edm4hepTHitP()->getQuality(),
+							     sourceLink.edm4hepTHitP()->getTime(),
+							     sourceLink.edm4hepTHitP()->getEDep(),
+							     sourceLink.edm4hepTHitP()->getEDepError(),
+							     sourceLink.edm4hepTHitP()->getPosition(),
+							     sourceLink.edm4hepTHitP()->getCovMatrix());
+				seedTrack.addToTrackerHits(trackHit);
 			}
 
-			seedTrack.addToTrackStates(seedTrackState);
-			seedCollection->push_back(seedTrack);
+			seedTrack.addToTrackStates(*seedTrackState);
 
 			log << MSG::DEBUG << "Seed Paramemeters" << std::endl << paramseed << endmsg;
 		}
@@ -430,10 +435,10 @@ std::tuple<edm4hep::TrackCollection,
 		auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
 		TrackContainer tracks(trackContainer, trackStateContainer);
 
-		for (std::size_t iseed = 0; iseed < paramseeds.size(); ++iseed) {
+		for (const auto& pseed : paramseeds) {
 			tracks.clear();
 
-			auto result = trackFinder.findTracks(paramseeds.at(iseed), ckfOptions, tracks);
+			auto result = trackFinder.findTracks(pseed, ckfOptions, tracks);
 			if (result.ok()) {
 				const auto& fitOutput = result.value();
 				for (const TrackContainer::TrackProxy& trackTip : fitOutput) {
@@ -447,17 +452,19 @@ std::tuple<edm4hep::TrackCollection,
 					log << MSG::DEBUG << "\tnStates       " << trackTip.nTrackStates() << endmsg;
 
 					// Make track object
-					edm4hep::Track track = ACTSTracking::ACTS2edm4hep_track(trackTip, magneticField(), magCache);
+					edm4hep::MutableTrack* track = ACTSTracking::ACTS2edm4hep_track(trackTip, magneticField(), magCache);
 
 					// Save results
-					trackCollection->push_back(track);
+					trackCollection->push_back(*track);
 				}
 			} else {
 				log << MSG::WARNING << "Track fit error: " << result.error() << endmsg;
 			}
 		}
+
+
 	}
-	
+
 	return std::make_tuple(std::move(seedCollection), std::move(trackCollection));
 }
 

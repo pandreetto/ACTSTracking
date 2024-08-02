@@ -4,8 +4,8 @@
 // edm4hep
 #include <edm4hep/TrackCollection.h>
 #include <edm4hep/MCParticleCollection.h>
-#include <edm4hep/MCRecoTrackerAssociationCollection.h>
 #include <edm4hep/MCRecoTrackParticleAssociationCollection.h>
+#include <edm4hep/MCRecoTrackerHitPlaneAssociationCollection.h>
 
 // Gaudi
 #include <GaudiAlg/GaudiAlgorithm.h>
@@ -34,14 +34,14 @@
 struct TrackTruthAlg final : Gaudi::Functional::MultiTransformer<std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection>(
 			const edm4hep::TrackCollection &, 
 			const edm4hep::MCParticleCollection &, 
-			const edm4hep::MCRecoTrackerAssociationCollection &)> {
+			const edm4hep::MCRecoTrackerHitPlaneAssociationCollection &)> {
 public:
 	TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc);
 
 	std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> operator()(
 			const edm4hep::TrackCollection& tracks, 
                         const edm4hep::MCParticleCollection& mcParticles,
-                        const edm4hep::MCRecoTrackerAssociationCollection& trackerHitRelations) const;
+                        const edm4hep::MCRecoTrackerHitPlaneAssociationCollection& trackerHitRelations) const;
 };
 
 #endif

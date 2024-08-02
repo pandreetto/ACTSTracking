@@ -21,7 +21,7 @@ BitFieldValue::BitFieldValue(int64_t& bitfield, const std::string& theName, unsi
     int64_t BitFieldValue::value() const {
         if (_isSigned) {
             int64_t val = (_b & _mask) >> _offset;
-            if (val & (1LL << (_width - 1))) {
+            if ((val & (1LL << (_width - 1))) != 0) {
                 val -= (1LL << _width);
             }
             return val;

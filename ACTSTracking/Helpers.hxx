@@ -1,7 +1,7 @@
 #pragma once
 
 #include <edm4hep/MCParticle.h>
-#include <edm4hep/Track.h>
+#include <edm4hep/MutableTrack.h>
 #include <edm4hep/TrackState.h>
 
 #include <GaudiKernel/MsgStream.h>
@@ -57,7 +57,7 @@ std::string findFile(const std::string& inpath);
  *
  * \return Track with equivalent parameters of the ACTS track
  */
-edm4hep::Track ACTS2edm4hep_track(
+edm4hep::MutableTrack* ACTS2edm4hep_track(
     const TrackResult& fitter_res,
     std::shared_ptr<Acts::MagneticFieldProvider> magneticField,
     Acts::MagneticFieldProvider::Cache& magCache);
@@ -70,10 +70,10 @@ edm4hep::Track ACTS2edm4hep_track(
  *
  * \return Track state with equivalent parameters of the ACTS track
  */
-edm4hep::TrackState ACTS2edm4hep_trackState(
+edm4hep::TrackState* ACTS2edm4hep_trackState(
     int location, const Acts::BoundTrackParameters& params, double Bz);
 
-edm4hep::TrackState ACTS2edm4hep_trackState(int location,
+edm4hep::TrackState* ACTS2edm4hep_trackState(int location,
                                           const Acts::BoundVector& value,
                                           const Acts::BoundMatrix& cov,
                                           double Bz);

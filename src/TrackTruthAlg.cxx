@@ -4,8 +4,8 @@
 #include <edm4hep/MCParticle.h>
 #include <edm4hep/SimTrackerHit.h>
 #include <edm4hep/Track.h>
-#include <edm4hep/TrackerHit.h>
-#include <edm4hep/MCRecoTrackerAssociation.h>
+#include <edm4hep/TrackerHitPlane.h>
+#include <edm4hep/MCRecoTrackerHitPlaneAssociation.h>
 
 
 
@@ -22,9 +22,9 @@ TrackTruthAlg::TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc) : Mul
 std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::operator()(
 			const edm4hep::TrackCollection& tracks,
                         const edm4hep::MCParticleCollection& mcParticles,
-                        const edm4hep::MCRecoTrackerAssociationCollection& trackerHitRelations) const{
+                        const edm4hep::MCRecoTrackerHitPlaneAssociationCollection& trackerHitRelations) const{
 	// Map TrackerHits to SimTrackerHits
-	std::map<edm4hep::TrackerHit, edm4hep::SimTrackerHit> trackerHit2SimHit;
+	std::map<edm4hep::TrackerHitPlane, edm4hep::SimTrackerHit> trackerHit2SimHit;
 	for (const auto& hitRel : trackerHitRelations) {
 		auto trackerHit = hitRel.getRec();
 		auto simTrackerHit = hitRel.getSim();
@@ -34,7 +34,7 @@ std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::ope
 	// Map best matches MCP to Track
 	std::map<edm4hep::MCParticle, edm4hep::Track> mcBestMatchTrack;
 	std::map<edm4hep::MCParticle, float> mcBestMatchFrac;
-
+/**
 	for (const auto& track: tracks) {
 		//Get Track
 		std::map<edm4hep::MCParticle, uint32_t> trackHit2Mc;
@@ -62,7 +62,7 @@ std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::ope
 			}
 		}
 	}
-
+*/
 	// Save the best matches
 	edm4hep::MCRecoTrackParticleAssociationCollection outColMC2T;
 	for (const auto& [mcParticle, track] : mcBestMatchTrack) {

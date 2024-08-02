@@ -1,6 +1,7 @@
 #include "ACTSDuplicateRemoval.hxx"
 
 #include <edm4hep/TrackerHit.h>
+#include <edm4hep/MutableTrack.h>
 
 #include <algorithm>
 
@@ -63,7 +64,7 @@ edm4hep::TrackCollection ACTSDuplicateRemoval::operator()(const edm4hep::TrackCo
 	
 	// Loop through all inputs and search for nearby equals
 	// Remove if they are too similar
-	std::vector<edm4hep::Track> finalTracks;
+	std::vector<edm4hep::MutableTrack> finalTracks;
 	for (const auto& track : sortedInput) {
 		bool foundAnEqual = false;
 		for (int i = (finalTracks.size() >= 10) ? finalTracks.size() - 10: 0; i < finalTracks.size(); ++i) {

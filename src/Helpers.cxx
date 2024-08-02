@@ -39,13 +39,13 @@ std::string findFile(const std::string& inpath) {
 }
 
 
-edm4hep::Track ACTS2edm4hep_track(const TrackResult& fitter_res,
+edm4hep::MutableTrack* ACTS2edm4hep_track(const TrackResult& fitter_res,
 				  std::shared_ptr<Acts::MagneticFieldProvider> magneticField,
 				  Acts::MagneticFieldProvider::Cache& magCache) {
-	edm4hep::MutableTrack track;
+	edm4hep::MutableTrack* track = new edm4hep::MutableTrack();
 	
-	track.setChi2(fitter_res.chi2());
-	track.setNdf(fitter_res.nDoF());
+	track->setChi2(fitter_res.chi2());
+	track->setNdf(fitter_res.nDoF());
 	
 	const Acts::Vector3 zeroPos(0, 0, 0);
 	Acts::Result<Acts::Vector3> fieldRes = magneticField->getField(zeroPos, magCache);
@@ -56,18 +56,26 @@ edm4hep::Track ACTS2edm4hep_track(const TrackResult& fitter_res,
 
 	const Acts::BoundVector& params = fitter_res.parameters();
 	const Acts::BoundMatrix& covariance = fitter_res.covariance();
-	edm4hep::TrackState trackStateAtIP = ACTSTracking::ACTS2edm4hep_trackState(
+	edm4hep::TrackState* trackStateAtIP = ACTSTracking::ACTS2edm4hep_trackState(
 		edm4hep::TrackState::AtIP, params, covariance, field[2] / Acts::UnitConstants::T);
-	track.addToTrackStates(trackStateAtIP);
+	track->addToTrackStates(*trackStateAtIP);
 
 	std::vector<edm4hep::TrackerHit> hitsOnTrack;
 	std::vector<edm4hep::TrackState> statesOnTrack;
-
+	
 	for (const auto& trk_state : fitter_res.trackStatesReversed()) {
 		if (!trk_state.hasUncalibratedSourceLink()) continue;
 
 		auto sl = trk_state.getUncalibratedSourceLink().get<ACTSTracking::SourceLink>();
-		edm4hep::TrackerHit curr_hit = sl.edm4hepTHit();
+		/// @TODO: This is a workaround. Once TrackerHit Interface works, you should just be able to pass TrackerHitPlane.
+		edm4hep::TrackerHit curr_hit(sl.edm4hepTHitP()->getCellID(),
+                                             sl.edm4hepTHitP()->getType(),
+                                             sl.edm4hepTHitP()->getQuality(),
+                                             sl.edm4hepTHitP()->getTime(),
+                                             sl.edm4hepTHitP()->getEDep(),
+                                             sl.edm4hepTHitP()->getEDepError(),
+                                             sl.edm4hepTHitP()->getPosition(),
+                                             sl.edm4hepTHitP()->getCovMatrix());;
 		hitsOnTrack.push_back(curr_hit);
 
 		const Acts::Vector3 hitPos(curr_hit.getPosition().x, 
@@ -80,17 +88,17 @@ edm4hep::Track ACTS2edm4hep_track(const TrackResult& fitter_res,
 		}
 		Acts::Vector3 field = *fieldRes;
 
-		edm4hep::TrackState trackState = ACTSTracking::ACTS2edm4hep_trackState(
+		edm4hep::TrackState* trackState = ACTSTracking::ACTS2edm4hep_trackState(
 			edm4hep::TrackState::AtOther, trk_state.smoothed(), 
 			trk_state.smoothedCovariance(), field[2] / Acts::UnitConstants::T);
-		statesOnTrack.push_back(trackState);
+		statesOnTrack.push_back(*trackState);
 	}
 
 	std::reverse(hitsOnTrack.begin(), hitsOnTrack.end());
 	std::reverse(statesOnTrack.begin(), statesOnTrack.end());
 
 	for (const auto& hit : hitsOnTrack) {
-		track.addToTrackerHits(hit);
+		track->addToTrackerHits(hit);
 	}
 
 	if (!statesOnTrack.empty()) {
@@ -99,7 +107,7 @@ edm4hep::Track ACTS2edm4hep_track(const TrackResult& fitter_res,
 	}
 
 	for (const auto& state : statesOnTrack) {
-		track.addToTrackStates(state);
+		track->addToTrackStates(state);
 	}
 
 	return track;
@@ -107,21 +115,21 @@ edm4hep::Track ACTS2edm4hep_track(const TrackResult& fitter_res,
 
 
 
-edm4hep::TrackState ACTS2edm4hep_trackState(int location, 
+edm4hep::TrackState* ACTS2edm4hep_trackState(int location, 
 					    const Acts::BoundTrackParameters& params, 
 					    double Bz) {
 	return ACTS2edm4hep_trackState(location, params.parameters(), params.covariance().value(), Bz);
 }
 
-edm4hep::TrackState ACTS2edm4hep_trackState(int location,
+edm4hep::TrackState* ACTS2edm4hep_trackState(int location,
 					    const Acts::BoundVector& value,
 					    const Acts::BoundMatrix& cov,
 					    double Bz) {
 	// Create new object
-	edm4hep::TrackState trackState;
+	edm4hep::TrackState* trackState = new edm4hep::TrackState();
 	
 	// Basic properties
-	trackState.location = location;
+	trackState->location = location;
 	
 	// Trajectory parameters
 	// Central values
@@ -136,11 +144,11 @@ edm4hep::TrackState ACTS2edm4hep_trackState(int location,
 	double lambda = M_PI / 2 - theta;
 	double tanlambda = std::tan(lambda);
 
-	trackState.phi = phi;
-	trackState.tanLambda = tanlambda;
-	trackState.omega = omega;
-	trackState.D0 = d0;
-	trackState.Z0 = z0;
+	trackState->phi = phi;
+	trackState->tanLambda = tanlambda;
+	trackState->omega = omega;
+	trackState->D0 = d0;
+	trackState->Z0 = z0;
 
 	// Uncertainties (covariance matrix)
 	Acts::ActsMatrix<6, 6> jac = Acts::ActsMatrix<6, 6>::Zero();
@@ -158,10 +166,11 @@ edm4hep::TrackState ACTS2edm4hep_trackState(int location,
 
 	Acts::ActsMatrix<6, 6> trcov = (jac * cov * jac.transpose());
 
-
+	int count = 0;
 	for (int i = 0; i < 6; ++i) {
-		for (int j = 0; j < 6; ++j) {
-			trackState.covMatrix[i*6 + j] = trcov(i, j);
+		for (int j = 0; j < i; ++j) {
+			trackState->covMatrix[count] = trcov(j, i);
+			count++;
 		}
 	}
 	

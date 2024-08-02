@@ -125,7 +125,6 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
   //
   // Volume ID determination.
 
-  std::cout << "System: "<< systemID << std::endl << "Layer: " << layerID << std::endl << "Side: " << sideID << std::endl << "Ladder: " << ladderID << std::endl << "Module: " << moduleID <<std::endl;
   // the outermost layer of InnerTracker is "OuterInnerTracker" in ACTS
   if (systemID == InnerTrackerBarrel && layerID == 2) {
     systemID = OuterInnerTrackerBarrel;
@@ -241,6 +240,7 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
       sensitive_id = ladderID;
       break;
   }
+
   geometry_id |= sensitive_id << (2 * 4);
 
   return geometry_id;

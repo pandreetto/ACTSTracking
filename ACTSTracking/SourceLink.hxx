@@ -12,8 +12,11 @@ class SourceLink final {
  public:
   //! \brief Construct from geometry identifier and hit
   SourceLink(Acts::GeometryIdentifier gid, std::size_t index,
-             edm4hep::TrackerHitPlane edmhit)
+             edm4hep::TrackerHitPlane* edmhit)
       : m_geometryId(gid), m_index(index), m_edm4hephit(edmhit) {}
+
+
+
 
   // Construct an invalid source link. Must be default constructible to
   /// satisfy SourceLinkConcept.
@@ -29,24 +32,11 @@ class SourceLink final {
   constexpr std::size_t index() const { return m_index; }
   /// Access the edm4hep TrackerHitPlane
   /// @TODO: We want this to be a TrackerHit to support multiple types of tracking detector. However, TrackerHitPlane is currently not derived from TrackerHit as expected.
-  edm4hep::TrackerHitPlane edm4hepTHitP() const { return m_edm4hephit; }
-  /// Access edm4hep TrackerHit
-  /// @TODO: This is a workaround. Hopefully this won't be needed
-  edm4hep::TrackerHit edm4hepTHit() const {
-  	edm4hep::TrackerHit trackHit(m_edm4hephit.getCellID(), 
-				     m_edm4hephit.getType(), 
-				     m_edm4hephit.getQuality(),
-				     m_edm4hephit.getTime(), 
-				     m_edm4hephit.getEDep(), 
-				     m_edm4hephit.getEDepError(), 
-				     m_edm4hephit.getPosition(), 
-				     m_edm4hephit.getCovMatrix());
-	return trackHit;
-  }
+  constexpr edm4hep::TrackerHitPlane* edm4hepTHitP() const { return m_edm4hephit; }
  private:
   Acts::GeometryIdentifier m_geometryId;
   std::size_t m_index = -1;
-  edm4hep::TrackerHitPlane m_edm4hephit;
+  edm4hep::TrackerHitPlane* m_edm4hephit = nullptr;
 
   friend constexpr bool operator==(const SourceLink& lhs,
                                    const SourceLink& rhs) {
