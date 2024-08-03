@@ -7,7 +7,7 @@
 #include <edm4hep/TrackerHitPlane.h>
 #include <edm4hep/MCRecoTrackerHitPlaneAssociation.h>
 
-
+#include <GaudiKernel/MsgStream.h>
 
 //------------------------------------------------------------------------------------------------
 
@@ -21,6 +21,7 @@ TrackTruthAlg::TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc) : Mul
 std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::operator()(
 			const edm4hep::TrackCollection& tracks,
                         const edm4hep::MCRecoTrackerHitPlaneAssociationCollection& trackerHitRelations) const{
+	MsgStream log(msgSvc(), name());
 	// Map TrackerHits to SimTrackerHits
 	std::map<edm4hep::TrackerHitPlane, edm4hep::SimTrackerHit> trackerHit2SimHit;
 	for (const auto& hitRel : trackerHitRelations) {
@@ -38,18 +39,18 @@ std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::ope
 		std::map<edm4hep::MCParticle, uint32_t> trackHit2Mc;
 		for (auto& hit : track.getTrackerHits()) {
 			//Search for SimHit
-			edm4hep::SimTrackerHit simHit;
+			const edm4hep::SimTrackerHit* simHit = nullptr;
 			/// @TODO: I am not happy with this. Again an edm4hep problem
 			for (const auto& pair : trackerHit2SimHit) {
 				if (pair.first.getCellID() == hit.getCellID() && pair.first.getType() == hit.getType() &&
 				    pair.first.getQuality() == hit.getQuality() && pair.first.getTime() == hit.getTime() &&
 				    pair.first.getPosition() == hit.getPosition()) {
-					simHit = pair.second;
+					simHit = (&pair.second);
 					break;
 				}
 			}
-			if (simHit.getMCParticle().isAvailable()) {
-				trackHit2Mc[simHit.getMCParticle()]++; //Increment MC Particle counter
+			if (simHit->getMCParticle().isAvailable()) {
+				trackHit2Mc[simHit->getMCParticle()]++; //Increment MC Particle counter
 			}
 		}
 
@@ -64,7 +65,7 @@ std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::ope
 			}
 		}
 	}
-
+	// HEY DUMMY, IMPLEMENT AN LCRelationNavigator INSTEAD OF GUESSING :/ MAYBE THAT"LL FIX IT....
 	// Save the best matches
 	edm4hep::MCRecoTrackParticleAssociationCollection outColMC2T;
 	for (const auto& [mcParticle, track] : mcBestMatchTrack) {
