@@ -65,7 +65,7 @@ std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::ope
 			}
 		}
 	}
-	// HEY DUMMY, IMPLEMENT AN LCRelationNavigator INSTEAD OF GUESSING :/ MAYBE THAT"LL FIX IT....
+
 	// Save the best matches
 	edm4hep::MCRecoTrackParticleAssociationCollection outColMC2T;
 	for (const auto& [mcParticle, track] : mcBestMatchTrack) {
