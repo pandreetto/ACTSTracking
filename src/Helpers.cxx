@@ -1,15 +1,18 @@
 #include "Helpers.hxx"
 
+// edm4hep
 #include <edm4hep/MutableTrack.h>
 #include <edm4hep/TrackerHit.h>
 
+// Standard
 #include <vector>
 #include <memory>
-
-#include <Acts/MagneticField/InterpolatedBFieldMap.hpp>
-
 #include <filesystem>
 
+// ACTS
+#include <Acts/MagneticField/InterpolatedBFieldMap.hpp>
+
+// ACTSTracking
 #include "config.h"
 
 namespace ACTSTracking {
@@ -39,6 +42,7 @@ std::string findFile(const std::string& inpath) {
 }
 
 void makeMutableTrack(const edm4hep::Track* track, edm4hep::MutableTrack* newTrack) {
+	// Take every piece of information from the Track and put it in a new Mutable Track
 	newTrack->setType(track->getType());
 	newTrack->setChi2(track->getChi2());
 	newTrack->setNdf(track->getNdf());
@@ -55,11 +59,14 @@ void makeMutableTrack(const edm4hep::Track* track, edm4hep::MutableTrack* newTra
 edm4hep::MutableTrack* ACTS2edm4hep_track(const TrackResult& fitter_res,
 				  std::shared_ptr<Acts::MagneticFieldProvider> magneticField,
 				  Acts::MagneticFieldProvider::Cache& magCache) {
+	// Create new object
 	edm4hep::MutableTrack* track = new edm4hep::MutableTrack();
 	
+	// Basic properties
 	track->setChi2(fitter_res.chi2());
 	track->setNdf(fitter_res.nDoF());
-	
+
+	// ACTS magnetic field	
 	const Acts::Vector3 zeroPos(0, 0, 0);
 	Acts::Result<Acts::Vector3> fieldRes = magneticField->getField(zeroPos, magCache);
 	if (!fieldRes.ok()) {
@@ -67,6 +74,7 @@ edm4hep::MutableTrack* ACTS2edm4hep_track(const TrackResult& fitter_res,
 	}
 	Acts::Vector3 field = *fieldRes;
 
+	// Covarienc and states
 	const Acts::BoundVector& params = fitter_res.parameters();
 	const Acts::BoundMatrix& covariance = fitter_res.covariance();
 	edm4hep::TrackState* trackStateAtIP = ACTSTracking::ACTS2edm4hep_trackState(
@@ -75,7 +83,8 @@ edm4hep::MutableTrack* ACTS2edm4hep_track(const TrackResult& fitter_res,
 
 	std::vector<edm4hep::TrackerHit> hitsOnTrack;
 	std::vector<edm4hep::TrackState> statesOnTrack;
-	
+
+	// Handle each track state	
 	for (const auto& trk_state : fitter_res.trackStatesReversed()) {
 		if (!trk_state.hasUncalibratedSourceLink()) continue;
 
@@ -110,6 +119,7 @@ edm4hep::MutableTrack* ACTS2edm4hep_track(const TrackResult& fitter_res,
 	std::reverse(hitsOnTrack.begin(), hitsOnTrack.end());
 	std::reverse(statesOnTrack.begin(), statesOnTrack.end());
 
+	// Add Track Hits	
 	for (const auto& hit : hitsOnTrack) {
 		track->addToTrackerHits(hit);
 	}
@@ -118,7 +128,8 @@ edm4hep::MutableTrack* ACTS2edm4hep_track(const TrackResult& fitter_res,
 		statesOnTrack.back().location = edm4hep::TrackState::AtLastHit;
 		statesOnTrack.front().location = edm4hep::TrackState::AtFirstHit;
 	}
-
+	
+	// Add Track States
 	for (const auto& state : statesOnTrack) {
 		track->addToTrackStates(state);
 	}

@@ -1,13 +1,16 @@
 #include "ACTSSeededCKFTrackingAlg.hxx"
 
+// edm4hep
 #include <edm4hep/MCParticle.h>
 #include <edm4hep/SimTrackerHit.h>
 #include <edm4hep/TrackerHitPlane.h>
 #include <edm4hep/TrackState.h>
 #include <edm4hep/MutableTrack.h>
 
+// Gaudi
 #include <GaudiKernel/MsgStream.h>
 
+// ACTS
 #include <Acts/EventData/MultiTrajectory.hpp>
 #include <Acts/Propagator/EigenStepper.hpp>
 #include <Acts/Propagator/Navigator.hpp>
@@ -23,6 +26,7 @@
 
 //using namespace Acts::UnitLiterals;
 
+// ACTSTracking
 #include "Helpers.hxx"
 #include "MeasurementCalibrator.hxx"
 #include "SeedSpacePoint.hxx"
@@ -36,12 +40,15 @@ using SSPoint = ACTSTracking::SeedSpacePoint;
 
 DECLARE_COMPONENT(ACTSSeededCKFTrackingAlg)
 
+// Constructor
 ACTSSeededCKFTrackingAlg::ACTSSeededCKFTrackingAlg(const std::string& name, ISvcLocator* svcLoc) 
 	: ACTSAlgBase(name, svcLoc) {}
 
 StatusCode ACTSSeededCKFTrackingAlg::initialize() {
+	// Set up a message service
 	MsgStream log(msgSvc(), name());
 	log << MSG::INFO << "Initializing ACTSSeededCKFTrackingAlg" << endmsg;
+	// Initialize the base
 	StatusCode init = ACTSAlgBase::initialize();
 
 	// Initialize seeding layers

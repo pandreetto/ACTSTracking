@@ -1,5 +1,6 @@
 #include "ACTSMergeRelationCollections.hxx"
 
+// edm4hep
 #include <edm4hep/MCRecoTrackerHitPlaneAssociation.h>
 
 
@@ -22,8 +23,10 @@ std::tuple<edm4hep::MCRecoTrackerHitPlaneAssociationCollection> ACTSMergeRelatio
 		const DataWrapper<edm4hep::MCRecoTrackerHitPlaneAssociationCollection>& col4,
 		const DataWrapper<edm4hep::MCRecoTrackerHitPlaneAssociationCollection>& col5,
 		const DataWrapper<edm4hep::MCRecoTrackerHitPlaneAssociationCollection>& col6) const{
+	// Initialize new collection
 	edm4hep::MCRecoTrackerHitPlaneAssociationCollection mergedCollection;
 
+	// Loop over all item in all collections and add them to the new collection
 	for (const auto& col : {col1.getData(), col2.getData(), col3.getData(), col4.getData(), col5.getData(), col6.getData()}) {
 		for (const auto& item : *col) {
 			auto link = mergedCollection->create(item.getWeight());

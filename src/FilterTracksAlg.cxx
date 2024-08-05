@@ -1,12 +1,16 @@
 #include "FilterTracksAlg.hxx"
 
+// DD4hep
 #include <DD4hep/Detector.h>
 
+// edm4hep
 #include <edm4hep/Track.h>
 #include <edm4hep/MutableTrack.h>
 
+// ACTSTracking
 #include "Helpers.hxx"
 
+// Standard
 #include <math.h>
 
 DECLARE_COMPONENT(FilterTracksAlg)
@@ -17,7 +21,7 @@ FilterTracksAlg::FilterTracksAlg(const std::string& name, ISvcLocator* pSvcLocat
 		KeyValue("OutputTrackCollectionName", "FilteredTracks")) {}
 
 StatusCode FilterTracksAlg::initialize() {
-	// set things up
+	// Set up magnetic field
 	buildBfield();
 
 	return StatusCode::SUCCESS;

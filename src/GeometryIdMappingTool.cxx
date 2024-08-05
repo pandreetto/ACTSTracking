@@ -6,6 +6,7 @@
 
 using namespace ACTSTracking;
 
+// Dector part identifications
 const int32_t GeometryIdMappingTool::VertexEndCapNegative = -2;
 const int32_t GeometryIdMappingTool::VertexBarrel = 1;
 const int32_t GeometryIdMappingTool::VertexEndCapPositive = 2;
@@ -69,26 +70,14 @@ const std::unordered_map<int32_t, uint32_t> GeometryIdMappingTool::VolumeMap = {
 };
 
 GeometryIdMappingTool::GeometryIdMappingTool(const std::string& encoderString) 
-	: m_decoder(encoderString) {
-	//std::stringstream ss(encoderString);
-	//std::string token;
-	//int currentShift = 0;
-
-//	while (std::getline(ss, token, ',')) {
-//		std::stringstream tokenStream(token);
-//		std::string name;
-//		int length;
-//		std::getline(tokenStream, name, ':');
-//		tokenStream >> length;
-//		m_encoderFields.push_back({name, length, currentShift});
-//		currentShift += length;
-//	}
-}
+	: m_decoder(encoderString) {}
 
 uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::SimTrackerHit& hit) {
+	// Decode Cell ID
 	uint64_t cellID = hit.getCellID();
 	m_decoder.setValue(cellID);
 
+	// Encode ACTS ID
 	return getGeometryID(m_decoder("system").value(), 
 			     m_decoder("layer").value(), 
 			     m_decoder("side").value(),
@@ -105,8 +94,10 @@ uint64_t GeometryIdMappingTool::getGeometryID(const edm4hep::TrackerHit& hit) {
 }
 
 uint64_t GeometryIdMappingTool::getGeometryIDTrack(uint64_t cellID) {
+	// Decode Cell ID
 	m_decoder.setValue(cellID);
 
+	// Encode ACTS ID
         return getGeometryID(m_decoder("system").value(),    
                              m_decoder("layer").value(),
                              m_decoder("side").value(),
@@ -241,7 +232,7 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
       break;
   }
 
-  geometry_id |= sensitive_id << (2 * 4);
+  geometry_id |= sensitive_id << (2 * 4); /// I've seen a 0 instead of a 2 here before. I think the 2 is right but am unsure
 
   return geometry_id;
 }

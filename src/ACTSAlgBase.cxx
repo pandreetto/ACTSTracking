@@ -1,12 +1,16 @@
 #include "ACTSAlgBase.hxx"
 
+// ROOT
 #include <TGeoManager.h>
+
+// Gaudi
 #include <GaudiKernel/MsgStream.h>
+
+// DD4hep
 #include <DD4hep/DD4hepUnits.h>
 #include <DD4hep/Detector.h>
 
-//#include <UTIL/LCTrackerConf.h>
-
+// ACTS
 #include <Acts/Definitions/Units.hpp>
 #include <Acts/Geometry/CylinderVolumeBuilder.hpp>
 #include <Acts/Geometry/CylinderVolumeHelper.hpp>
@@ -22,6 +26,7 @@
 #include <Acts/Plugins/TGeo/TGeoDetectorElement.hpp>
 #include <Acts/Plugins/TGeo/TGeoLayerBuilder.hpp>
 
+// ACTSTracking
 #include "Helpers.hxx"
 
 using namespace ACTSTracking;
@@ -74,9 +79,7 @@ StatusCode ACTSAlgBase::initialize() {
 	log << MSG::INFO << " -- Building tracking detector" << endmsg;
 	buildDetector();
 
-	log << MSG::INFO // << " ---- instantiated  geometry for detector " <<
-	// theDetector.header().name()  << std::endl
-	<< " -------------------------------------" << endmsg;
+	log << MSG::INFO << " -------------------------------------" << endmsg;
 
 	// Initialize mapping tool
 	m_geoIDMappingTool = std::make_shared<GeometryIdMappingTool>("system:5,side:-2,layer:6,module:11,sensor:8");

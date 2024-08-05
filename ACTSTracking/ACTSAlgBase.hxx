@@ -50,7 +50,7 @@ struct ACTSAlgBase : Gaudi::Functional::MultiTransformer<std::tuple<
 
 public:
 	/**
- 	 * @brief Constructor for ACTSAlgBase.
+ 	 * @brief Constructer for ACTSAlgBase.
  	 * @param name unique string identifier for this instance
  	 * @param svcLoc a Service Locator passed by the Gaudi AlgManager
  	 */  

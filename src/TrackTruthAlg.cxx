@@ -1,13 +1,14 @@
 #include "TrackTruthAlg.hxx"
+
+// ACTSTracking
 #include "Helpers.hxx"
 
+// edm4hep
 #include <edm4hep/MCParticle.h>
 #include <edm4hep/SimTrackerHit.h>
 #include <edm4hep/Track.h>
 #include <edm4hep/TrackerHitPlane.h>
 #include <edm4hep/MCRecoTrackerHitPlaneAssociation.h>
-
-#include <GaudiKernel/MsgStream.h>
 
 //------------------------------------------------------------------------------------------------
 
@@ -21,7 +22,6 @@ TrackTruthAlg::TrackTruthAlg(const std::string& name, ISvcLocator* svcLoc) : Mul
 std::tuple<edm4hep::MCRecoTrackParticleAssociationCollection> TrackTruthAlg::operator()(
 			const edm4hep::TrackCollection& tracks,
                         const edm4hep::MCRecoTrackerHitPlaneAssociationCollection& trackerHitRelations) const{
-	MsgStream log(msgSvc(), name());
 	// Map TrackerHits to SimTrackerHits
 	std::map<edm4hep::TrackerHitPlane, edm4hep::SimTrackerHit> trackerHit2SimHit;
 	for (const auto& hitRel : trackerHitRelations) {

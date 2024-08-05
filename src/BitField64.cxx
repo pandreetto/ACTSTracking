@@ -4,12 +4,14 @@ BitFieldValue::BitFieldValue(int64_t& bitfield, const std::string& theName, unsi
         : _b(bitfield), _mask(0), _name(theName), _offset(theOffset), _width(abs(signedWidth)),
           _minVal(0), _maxVal(0), _isSigned(signedWidth < 0) {
 
+	// Ensure the information fits in the object
         if (_offset > 63 || _offset + _width > 64) {
             throw std::runtime_error("BitFieldValue: offset out of range");
         }
-
+	
+	// Setup initial values
         _mask = ((0x0001LL << _width) - 1) << _offset;
-
+	
         if (_isSigned) {
             _minVal = (1LL << (_width - 1)) - (1LL << _width);
             _maxVal = (1LL << (_width - 1)) - 1;
@@ -20,18 +22,21 @@ BitFieldValue::BitFieldValue(int64_t& bitfield, const std::string& theName, unsi
 
     int64_t BitFieldValue::value() const {
         if (_isSigned) {
-            int64_t val = (_b & _mask) >> _offset;
-            if ((val & (1LL << (_width - 1))) != 0) {
-                val -= (1LL << _width);
-            }
-            return val;
+		// Handle signed values
+        	int64_t val = (_b & _mask) >> _offset;
+        	if ((val & (1LL << (_width - 1))) != 0) {
+        		val -= (1LL << _width);
+        	}
+        	return val;
         } else {
-            return (_b & _mask) >> _offset;
+		// Handle unsigned values
+        	return (_b & _mask) >> _offset;
         }
     }
 
     BitFieldValue& BitFieldValue::operator=(int64_t in) {
-        if (in < _minVal || in > _maxVal) {
+        // Error handle
+	if (in < _minVal || in > _maxVal) {
             throw std::runtime_error("BitFieldValue: value out of range");
         }
         _b &= ~_mask;
@@ -117,19 +122,23 @@ BitFieldValue::BitFieldValue(int64_t& bitfield, const std::string& theName, unsi
     }
 
     void BitField64::init(const std::string& initString) {
+	// Setup new objects
         unsigned offset = 0;
         std::vector<std::string> fieldDescriptors;
         std::istringstream ss(initString);
         std::string token;
 
+	// Loop through the string and separte the values
         while (std::getline(ss, token, ',')) {
             fieldDescriptors.push_back(token);
         }
 
+	// Set up each value separately
         for (const auto& desc : fieldDescriptors) {
             std::vector<std::string> subfields;
             std::istringstream ss2(desc);
             std::string subtoken;
+	    // Look for subfields
             while (std::getline(ss2, subtoken, ':')) {
                 subfields.push_back(subtoken);
             }
@@ -137,7 +146,8 @@ BitFieldValue::BitFieldValue(int64_t& bitfield, const std::string& theName, unsi
             std::string name;
             int width;
             unsigned thisOffset;
-
+	    
+	    // Handle subfields
             switch (subfields.size()) {
                 case 2:
                     name = subfields[0];

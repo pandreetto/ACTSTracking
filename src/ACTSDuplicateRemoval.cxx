@@ -1,15 +1,19 @@
 #include "ACTSDuplicateRemoval.hxx"
-#include <GaudiKernel/MsgStream.h>
+
+// edm4hep
 #include <edm4hep/TrackerHit.h>
 #include <edm4hep/MutableTrack.h>
 
+// Standard
 #include <algorithm>
+
+// ACTSTracking
 #include "Helpers.hxx"
 
 namespace ACTSTracking {
 /**
- * Return true if `trk1` and `trk2` share at least 50% of hits.
- * @TODO: I do not like hte way this had to be implemented. Find doesn't seem to play nice... Maybe with TrackerHits maybe with podio::RelationRange
+ * @brief Return true if `trk1` and `trk2` share at least 50% of hits.
+ * @TODO: I do not like the way this had to be implemented. Find doesn't seem to play nice... Maybe with TrackerHits maybe with podio::RelationRange
  */
 inline bool tracks_equal(const edm4hep::Track& trk1, const edm4hep::Track& trk2) {
 	const auto& hits1 = trk1.getTrackerHits();
@@ -19,6 +23,7 @@ inline bool tracks_equal(const edm4hep::Track& trk1, const edm4hep::Track& trk2)
 	uint32_t hitOlap = 0;
 	for (const auto& hit1 : hits1) {
 		for (const auto& hit2 : hits2) {
+			// This is the part I have an issue with
 			if (hit1.getCellID() == hit2.getCellID() && hit1.getType() == hit2.getType() &&
                             hit1.getQuality() == hit2.getQuality() && hit1.getTime() == hit2.getTime() &&
                             hit1.getPosition() == hit2.getPosition()) { hitOlap++; }
@@ -32,7 +37,7 @@ inline bool tracks_equal(const edm4hep::Track& trk1, const edm4hep::Track& trk2)
 }
 
 /**
- * Return true if `trk1` is of higher quality than `trk2`.
+ * @brief Return true if `trk1` is of higher quality than `trk2`.
  */
 bool track_quality_compare(const edm4hep::Track& trk1, const edm4hep::Track& trk2) {
 	// If number of hits are different, then the one with more
@@ -56,7 +61,6 @@ ACTSDuplicateRemoval::ACTSDuplicateRemoval(const std::string& name, ISvcLocator*
 				KeyValue("OutputTrackCollectionName", "DedupedTruthTracks")) {}
 
 edm4hep::TrackCollection ACTSDuplicateRemoval::operator()(const edm4hep::TrackCollection& trackCollection) const{
-	MsgStream log(msgSvc(), name());
 	// Make output collection
 	edm4hep::TrackCollection outputTracks;
 

@@ -1,5 +1,6 @@
 #include "ACTSMergeHitCollections.hxx"
 
+// edm4hep
 #include <edm4hep/TrackerHitPlane.h>
 
 
@@ -22,8 +23,10 @@ std::tuple<edm4hep::TrackerHitPlaneCollection> ACTSMergeHitCollections::operator
 		const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col4,
 		const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col5,
 		const DataWrapper<edm4hep::TrackerHitPlaneCollection>& col6) const{
+	// Initialize collection
 	edm4hep::TrackerHitPlaneCollection mergedCollection;
 
+	// Loop over all items in all collections and add each to a new collection
 	for (const auto& col : {col1.getData(), col2.getData(), col3.getData(), col4.getData(), col5.getData(), col6.getData()}) {
 		for (const auto& item : *col) {
 			(void)mergedCollection->create(item.getCellID(), item.getType(), item.getQuality(), item.getTime(), item.getEDep(), item.getEDepError(), item.getU(), item.getV(), item.getDu(), item.getDv(), item.getPosition(), item.getCovMatrix());
