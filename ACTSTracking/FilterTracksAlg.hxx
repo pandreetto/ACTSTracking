@@ -46,7 +46,8 @@ struct FilterTracksAlg final : Gaudi::Functional::Transformer<edm4hep::TrackColl
 
 	private:
 		/**
-		 * @brief Sets up the Magnetic Field of the Detector
+		 * @brief Sets up the Magnetic Field of the Detector from dd4hep
+		 * @TODO: This can be done better with a GeoSvc.
 		 */
 		void buildBfield();
 

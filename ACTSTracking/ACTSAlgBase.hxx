@@ -61,9 +61,14 @@ public:
  	 */
 	StatusCode initialize();
 private:
-	//! Sets up the detector geometry
+	/**
+ 	 * @brief Sets up ACTS Detector geometry
+ 	 */ 
 	void buildDetector();
-	//! Sets up magnetic field for detector
+	/**
+ 	 * @brief Builds the Magnetic field from dd4hep Detector information
+ 	 * @TODO: This can be done more naturally with a GeoSvc.
+ 	 */
 	void buildBfield();
 
 protected:
