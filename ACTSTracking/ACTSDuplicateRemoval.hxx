@@ -18,13 +18,24 @@
  * If tracks share more than 50% of hits, then
  * remove the best one.
  *
- * @author Karol Krizka, Samuel Ferraro
+ * @author Karol Krizka
+ * @author Samuel Ferraro
  * @version $Id$
  */
 struct ACTSDuplicateRemoval final : Gaudi::Functional::Transformer <edm4hep::TrackCollection(const edm4hep::TrackCollection&)> {
 public:
+	/**
+         * @brief Constructor for ACTSDuplicateRemoval
+         * @param name unique string identifier for this instance
+         * @param svcLoc a Service Locator passed by the Gaudi AlgManager
+         */
 	ACTSDuplicateRemoval(const std::string& name, ISvcLocator* svcLoc);
-
+	
+	/**
+         * @brief ACTSDuplicateRemoval operation. The workhorse of this Transformer.
+         * @param trackCollection A collection of reconstructed tracks with possible duplicates
+         * @return A Track Collection with duplicates removed
+         */
 	edm4hep::TrackCollection operator()(const edm4hep::TrackCollection& trackCollection) const override;
 };
 

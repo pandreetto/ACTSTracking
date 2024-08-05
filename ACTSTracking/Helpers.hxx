@@ -1,11 +1,13 @@
 #pragma once
 
+// edm4hep
 #include <edm4hep/MCParticle.h>
 #include <edm4hep/Track.h>
 #include <edm4hep/MutableTrack.h>
 #include <edm4hep/TrackState.h>
 #include <edm4hep/TrackCollection.h>
 
+// Gaudi
 #include <GaudiKernel/MsgStream.h>
 #include <GaudiKernel/ServiceHandle.h>
 #include <GaudiKernel/StatusCode.h>
@@ -14,6 +16,7 @@
 #include <GaudiKernel/IDataManagerSvc.h>
 #include <GaudiKernel/SmartDataPtr.h>
 
+// ACTS
 #include <Acts/EventData/TrackParameters.hpp>
 #include "Acts/EventData/ParticleHypothesis.hpp"
 #include <Acts/MagneticField/MagneticFieldProvider.hpp>
@@ -22,6 +25,7 @@
 #include <Acts/EventData/VectorTrackContainer.hpp>
 #include <Acts/EventData/VectorMultiTrajectory.hpp>
 
+// ACTSTracking
 #include "SourceLink.hxx"
 
 namespace ACTSTracking {
@@ -88,7 +92,7 @@ edm4hep::MutableTrack* ACTS2edm4hep_track(
  */
 edm4hep::TrackState* ACTS2edm4hep_trackState(
     int location, const Acts::BoundTrackParameters& params, double Bz);
-
+//! Helper Method for ACTS2edm4hep_trackState
 edm4hep::TrackState* ACTS2edm4hep_trackState(int location,
                                           const Acts::BoundVector& value,
                                           const Acts::BoundMatrix& cov,

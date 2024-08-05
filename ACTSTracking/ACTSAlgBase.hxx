@@ -21,8 +21,11 @@
 #include <k4FWCore/DataHandle.h>
 #include <k4FWCore/BaseClass.h>
 
+// Standard
 #include <tuple>
 #include <string>
+
+// ACTSTracking
 #include "GeometryIdMappingTool.hxx"
 
 //! Base processor for ACTS tracking
@@ -34,7 +37,8 @@
  * description is already loaded. For example, via the
  * InitializeDD4hep processor.
  *
- * @author Karol Krizka, Samuel Ferraro
+ * @author Karol Krizka
+ * @author Samuel Ferraro
  * @version $Id$
  */
 struct ACTSAlgBase : Gaudi::Functional::MultiTransformer<std::tuple<
@@ -45,10 +49,21 @@ struct ACTSAlgBase : Gaudi::Functional::MultiTransformer<std::tuple<
 	using DetectorStore = std::vector<DetectorElementPtr>;
 
 public:
+	/**
+ 	 * @brief Constructor for ACTSAlgBase.
+ 	 * @param name unique string identifier for this instance
+ 	 * @param svcLoc a Service Locator passed by the Gaudi AlgManager
+ 	 */  
 	ACTSAlgBase(const std::string& name, ISvcLocator* svcLoc);
+	/**
+ 	 * @brief an initializer for the base reconstruction algorithm
+ 	 * Sets up geometry.
+ 	 */
 	StatusCode initialize();
 private:
+	//! Sets up the detector geometry
 	void buildDetector();
+	//! Sets up magnetic field for detector
 	void buildBfield();
 
 protected:
@@ -58,29 +73,57 @@ protected:
 	//! Path to tracker geometry file
 	Gaudi::Property<std::string> m_tgeoFile{this, "TGeoFile", std::string(""), "Path to the tracker geometry file."};
 
+	/**
+ 	 * @brief Gets the geometry Mapping Tool (To decode Cell IDs)
+ 	 * @return ACTSTracking Geometry Mapping Tool
+ 	 */
 	std::shared_ptr<ACTSTracking::GeometryIdMappingTool> geoIDMappingTool() const;
 
-	const Acts::MagneticFieldContext& magneticFieldContext() const;
+	/**
+ 	 * @brief Gets the Magnetic Field Context (ACTS)
+ 	 * @return ACTS Magnetic Field Context
+ 	 */
+	const Acts::MagneticFieldContext& magneticFieldContext() const; 
+	/**
+         * @brief Gets the Geometry Context (ACTS)
+         * @return ACTS Geometry Context
+         */
 	const Acts::GeometryContext& geometryContext() const;
-	const Acts::CalibrationContext& calibrationContext() const;
+	/**
+         * @brief Gets the Calibration Context (ACTS)
+         * @return ACTS Calibration Context
+         */
+	const Acts::CalibrationContext& calibrationContext() const; 
 
+	/**
+         * @brief Gets the Magnetic Field (ACTS)
+         * @return ACTS Magnetic Field Provider
+         */
 	std::shared_ptr<Acts::MagneticFieldProvider> magneticField() const;
-	std::shared_ptr<const Acts::TrackingGeometry> trackingGeometry() const;
+	/**
+         * @brief Gets the Tracking Geometry (ACTS)
+         * @return ACTS Tracking Geometry
+         */
+	std::shared_ptr<const Acts::TrackingGeometry> trackingGeometry() const; 
 
-	//! Find surface for hit
+	/**
+         * @brief Determines which surface corresponds to provided hit
+	 * @param hit A Tracker Hit
+         * @return ACTS Surface
+         */
 	const Acts::Surface* findSurface(const edm4hep::TrackerHit hit) const;
 
 private:
-	std::shared_ptr<ACTSTracking::GeometryIdMappingTool> m_geoIDMappingTool;
+	std::shared_ptr<ACTSTracking::GeometryIdMappingTool> m_geoIDMappingTool; ///< Tool to decode Cell IDs
 
-	Acts::MagneticFieldContext m_magneticFieldContext;
-	std::shared_ptr<Acts::MagneticFieldProvider> m_magneticField;
+	Acts::MagneticFieldContext m_magneticFieldContext; ///< Magnetic Field Context
+	std::shared_ptr<Acts::MagneticFieldProvider> m_magneticField; ///< Actual Magnetic Field
 
-	Acts::GeometryContext m_geometryContext;
-	DetectorStore m_detectorStore;
-	std::shared_ptr<const Acts::TrackingGeometry> m_trackingGeometry = nullptr;
+	Acts::GeometryContext m_geometryContext; ///< Geomtry Context
+	DetectorStore m_detectorStore; ///< Detector Information
+	std::shared_ptr<const Acts::TrackingGeometry> m_trackingGeometry = nullptr; ///< Tracking Geometry
 
-	Acts::CalibrationContext m_calibrationContext;
+	Acts::CalibrationContext m_calibrationContext; ///< Calibration Context
 };
 
 #endif

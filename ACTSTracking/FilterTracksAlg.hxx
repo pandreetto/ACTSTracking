@@ -1,4 +1,5 @@
 #pragma once
+
 // edm4hep
 #include <edm4hep/TrackCollection.h>
 
@@ -11,20 +12,42 @@
 // k4FWCore
 #include <k4FWCore/DataHandle.h>
 
+// Standard
 #include <memory>
 
 namespace TrackPerf {}
 
+/**
+ * @brief A Transformer that Filters Out Reconstructed Tracks Given a Set of Requirements
+ *
+ * @author Samuel Ferraro
+ * @author Unknown
+ */
 struct FilterTracksAlg final : Gaudi::Functional::Transformer<edm4hep::TrackCollection(const edm4hep::TrackCollection&)> {
 	public:
-		// Constructor
+		/**
+         	* @brief Constructor for FilterTracksAlg
+         	* @param name unique string identifier for this instance
+         	* @param svcLoc a Service Locator passed by the Gaudi AlgManager
+         	*/	
 		FilterTracksAlg(const std::string& name, ISvcLocator* pSvcLocator);
-
+		
+		/**
+		 * @brief Sets up the Magnetic Field of the detector
+		 */
 		StatusCode initialize();
 
+		/**
+         	* @brief FilterTracksAlg operation. The workhorse of this Transformer.
+         	* @param trackCollection A collection of deduped tracks.
+         	* @return A Track Collection with filters applied
+         	*/
 		edm4hep::TrackCollection operator()(const edm4hep::TrackCollection& tracks) const;
 
 	private:
+		/**
+		 * @brief Sets up the Magnetic Field of the Detector
+		 */
 		void buildBfield();
 
 		//! Cut off for total number of hits

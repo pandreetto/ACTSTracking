@@ -47,7 +47,7 @@ class MeasurementCalibrator {
     assert((idxSourceLink.index() < m_measurements.size()) and
            "Source link index is outside the container bounds");
 
-    const auto& meas = std::get<1>(m_measurements[idxSourceLink.index()]);  //TODO workaround
+    const auto& meas = std::get<1>(m_measurements[idxSourceLink.index()]);  ///< @TODO workaround
     trackState.allocateCalibrated(meas.size());
     trackState.setCalibrated(meas);
   }

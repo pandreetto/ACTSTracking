@@ -6,20 +6,21 @@
 #include <vector>
 
 namespace ACTSTracking {
-//! Space point representation of a measurement suitable for track seeding.
 /**
+ * @brief Space point representation of a measurement suitable for track seeding.
+ *
  * Based on ACTS' `ActsExamples::SimSpacePoint`.
  */
 class SeedSpacePoint {
  public:
-  /// Construct the space point from global position and selected variances.
-  ///
-  // \tparam position_t Input position type
-  // \param pos Global position
-  // \param varRho Measurement variance of the global transverse distance
-  // \param varZ Measurement variance of the global longitudinal position
-  // \param sourceLink Link to the original measurement
-  //
+  /** Construct the space point from global position and selected variances.
+   *
+   * @tparam position_t Input position type
+   * @param pos Global position
+   * @param varRho Measurement variance of the global transverse distance
+   * @param varZ Measurement variance of the global longitudinal position
+   * @param sourceLink Link to the original measurement
+   */
   template <typename position_t>
   SeedSpacePoint(const Eigen::MatrixBase<position_t>& pos, float varRho,
                  float varZ, const SourceLink& sourceLink)
@@ -46,26 +47,32 @@ class SeedSpacePoint {
   {
     return m_sourceLink.edm4hepTHitP()->getTime();
   }
-  // TODO missing: const std::optional<float> varianceT() const
+  /// @TODO missing: const std::optional<float> varianceT() const
 
  private:
-  // Global position
+  /// Global position
+  ///@{
   float m_x;
   float m_y;
   float m_z;
   float m_rho;
-  // Variance in rho/z of the global coordinates
+  ///@}
+  /// Variance in rho/z of the global coordinates
+  ///@{
   float m_varianceRho;
   float m_varianceZ;
-  // Index of the corresponding measurement
+  ///@}
+  /// Index of the corresponding measurement
   SourceLink m_sourceLink;
 };
 
+/**
+ * @TODO would it be sufficient to check just the index under the assumption
+ * that the same measurement index always produces the same space point? 
+ * no need to check r since it is fully defined by x/y
+ */
 constexpr bool operator==(const SeedSpacePoint& lhs,
                           const SeedSpacePoint& rhs) {
-  // TODO would it be sufficient to check just the index under the assumption
-  //   that the same measurement index always produces the same space point?
-  // no need to check r since it is fully defined by x/y
   return (lhs.sourceLink() == rhs.sourceLink()) and (lhs.x() == rhs.x()) and
          (lhs.y() == rhs.y()) and (lhs.z() == rhs.z()) and
          (lhs.varianceR() == rhs.varianceR()) and

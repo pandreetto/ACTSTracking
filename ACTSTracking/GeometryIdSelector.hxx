@@ -4,8 +4,9 @@
 #include <vector>
 
 namespace ACTSTracking {
-//! \brief Filter hits based on geometry ID's
-/**
+/** 
+ * @brief Filter hits based on geometry ID's
+ *
  * @author Karol Krizka
  * @version $Id$
  */

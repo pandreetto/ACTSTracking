@@ -1,6 +1,7 @@
 #ifndef BITFIELD64_H
 #define BITFIELD64_H
 
+// Standard
 #include <iostream>
 #include <string>
 #include <vector>
@@ -12,6 +13,10 @@
 /**
  * @class BitFieldValue
  * @brief Represents a value within a bitfield.
+ * This is adapted from LCIO's BitFieldValue to work
+ * for edm4hep. It is almost exactly the same.
+ *
+ * @author Samuel Ferraro
  */
 class BitFieldValue {
     public:
@@ -82,6 +87,10 @@ class BitFieldValue {
 /**
  * @class BitField64
  * @brief Represents a 64-bit bitfield with multiple fields.
+ * This is adapted from LCIO's BitField64 to work with
+ * edm4hep. It is almost exactly the same.
+ *
+ * @author Samuel Ferraro
  */
 class BitField64 {
     public:

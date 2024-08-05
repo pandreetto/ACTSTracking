@@ -1,14 +1,20 @@
 #ifndef CELLIDDECODER_H
 #define CELLIDDECODER_H
 
+// Standard
 #include <string>
 #include <iostream>
 #include <map>
 
+// ACTSTracking
 #include "BitField64.hxx"
+
 /**
  * @class CellIDDecoder
  * @brief Decoder for cell IDs using a bitfield.
+ * This is adapted from LCIO's CellIDDecoder to work with
+ * edm4hep. It is very similar
+ * @author Samuel Ferraro
  */
 class CellIDDecoder {
     public:
