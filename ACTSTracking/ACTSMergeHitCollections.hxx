@@ -20,7 +20,7 @@
 struct ACTSMergeHitCollections final : Gaudi::Functional::MultiTransformer<std::tuple<edm4hep::TrackerHitPlaneCollection>(
 		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &,
 		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &,
-		const DataWrapper<edm3hep::TrackerHitPlaneCollection> &,
+		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &,
 		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &,
 		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &,
 		const DataWrapper<edm4hep::TrackerHitPlaneCollection> &)> {

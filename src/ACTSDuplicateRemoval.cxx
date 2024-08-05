@@ -13,31 +13,33 @@
 namespace ACTSTracking {
 /**
  * @brief Return true if `trk1` and `trk2` share at least 50% of hits.
- * @TODO: I do not like the way this had to be implemented. Find doesn't seem to play nice... Maybe with TrackerHits maybe with podio::RelationRange
+ * @param trk1 One of two tracks to compare
+ * @param tkr2 One of two tracks to compare
+ * @return True if they share too many of the same Tracker Hits
  */
 inline bool tracks_equal(const edm4hep::Track& trk1, const edm4hep::Track& trk2) {
+	// Get an iterator for the Track hits of the first Track
 	const auto& hits1 = trk1.getTrackerHits();
-	const auto& hits2 = trk2.getTrackerHits();
-
-	// Number of overlapping hist
 	uint32_t hitOlap = 0;
+	// Loop through each track hit and see if it overlaps with the second track
 	for (const auto& hit1 : hits1) {
-		for (const auto& hit2 : hits2) {
-			// This is the part I have an issue with
-			if (hit1.getCellID() == hit2.getCellID() && hit1.getType() == hit2.getType() &&
-                            hit1.getQuality() == hit2.getQuality() && hit1.getTime() == hit2.getTime() &&
-                            hit1.getPosition() == hit2.getPosition()) { hitOlap++; }
+		if (std::find(trk2.trackerHits_begin(), trk2.trackerHits_end(), hit1) != trk1.trackerHits_end()) {
+			hitOlap++; // If it does overlap, increment hitOlap
 		}
 	}
 
 	// Smaller track count
-	uint32_t size = std::min(hits1.size(), hits2.size());
+	uint32_t size = std::min(hits1.size(), trk2.getTrackerHits().size());
 
 	return 2 * hitOlap > size;  // half of smaller track belong to larger track
 }
 
 /**
- * @brief Return true if `trk1` is of higher quality than `trk2`.
+ * @brief Determine which of two tracks is of better quality
+ * @details Quality is determined first by number of hits, then by chi2
+ * @param trk1 One of two tracks to compare
+ * @param trk2 One of two tracks to compare
+ * @return True if the first track is of better quality
  */
 bool track_quality_compare(const edm4hep::Track& trk1, const edm4hep::Track& trk2) {
 	// If number of hits are different, then the one with more
@@ -49,6 +51,12 @@ bool track_quality_compare(const edm4hep::Track& trk1, const edm4hep::Track& trk
 	return trk1.getChi2() < trk2.getChi2();
 }
 
+/**
+ * @brief Compares the tan(lambda) of two tracks. For ordering
+ * @param trk1 One of two tracks to compare
+ * @param trk2 One of two tracks to compare
+ * @return True if the first track has lower tan(lambda) in the first track state
+ */
 inline bool track_duplicate_compare(const edm4hep::Track& trk1, const edm4hep::Track& trk2) {
 	return trk1.getTrackStates(edm4hep::TrackState::AtIP).tanLambda < trk2.getTrackStates(edm4hep::TrackState::AtIP).tanLambda;
 }
