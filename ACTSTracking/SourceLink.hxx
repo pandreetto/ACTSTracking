@@ -65,5 +65,16 @@ struct SourceLinkAccessor : GeometryIdMultisetAccessor<SourceLink> {
   }
 };
 
+/// Access for the surface associated to a source link
+struct SurfaceAccessor {
+  const std::shared_ptr<const Acts::TrackingGeometry> trackingGeometry;
+
+  const Acts::Surface* operator()(const Acts::SourceLink& sourceLink) const {
+    const auto& mySourceLink = sourceLink.get<SourceLink>();
+      return trackingGeometry->findSurface(mySourceLink.geometryId());
+    }
+  };
+
+
 }  // namespace ACTSTracking
 

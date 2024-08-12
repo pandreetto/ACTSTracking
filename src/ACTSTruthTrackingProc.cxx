@@ -231,6 +231,7 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
 
     // Make container
     // MeasurementContainer track;
+    ACTSTracking::MeasurementContainer measurements;
     std::vector<Acts::SourceLink> trackSourceLinks;
     ACTSTracking::MeasurementContainer track;
     for (EVENT::TrackerHit* hit : trackFilteredByRHits) {
@@ -263,6 +264,7 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
           sourceLink, loc, cov, Acts::eBoundLoc0, Acts::eBoundLoc1);
 
       track.push_back(meas);
+      measurements.push_back(meas);
       trackSourceLinks.push_back(sourceLink);
     }
 
@@ -276,13 +278,22 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
     Updater kfUpdater;
     Smoother kfSmoother;
 
+    ACTSTracking::MeasurementCalibrator measCal { measurements };
+    ACTSTracking::SurfaceAccessor surfaceAccessor {trackingGeometry()};
+
     Acts::KalmanFitterExtensions<Acts::VectorMultiTrajectory> extensions;
+    extensions.calibrator.connect<
+        &ACTSTracking::MeasurementCalibrator::calibrate>(
+        &measCal);
     extensions.updater.connect<
         &Acts::GainMatrixUpdater::operator()<Acts::VectorMultiTrajectory>>(
         &kfUpdater);
     extensions.smoother.connect<
         &Acts::GainMatrixSmoother::operator()<Acts::VectorMultiTrajectory>>(
         &kfSmoother);
+    extensions.surfaceAccessor.connect<
+        &ACTSTracking::SurfaceAccessor::operator()>(
+        &surfaceAccessor);
 
     // Set the KalmanFitter options
     // std::unique_ptr<const Acts::Logger>
