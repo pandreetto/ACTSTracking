@@ -324,7 +324,6 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
       const auto& fitOutput = result.value();
       for (const auto& trackTip : fitOutput)
       {
-        std::cout << trackTip.chi2() << std::endl;
         EVENT::Track* track = ACTSTracking::ACTS2Marlin_track(
             trackTip, magneticField(), magCache,
             _caloFaceR, _caloFaceZ, geometryContext(), magneticFieldContext(), trackingGeometry());
