@@ -283,11 +283,19 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
        sortedHits) {
     // Convert to Acts hit
     const Acts::Surface *surface = trackingGeometry()->findSurface(hit.first);
-    if (surface == nullptr) throw std::runtime_error("Surface not found");
+    
+    std::cout << "hit: " << hit.first.volume() << " " << hit.first.boundary() << " " << hit.first.layer() << " " << hit.first.approach() << " " << hit.first.sensitive() << std::endl;
+    
+    // if (surface == nullptr) throw std::runtime_error("Surface not found");
 
     const double *lcioglobalpos = hit.second->getPosition();
     Acts::Vector3 globalPos = {lcioglobalpos[0], lcioglobalpos[1],
                                lcioglobalpos[2]};
+    //print position
+    std::cout << "globalPos: " << globalPos[0] << " " << globalPos[1] << " " << globalPos[2] << std::endl;
+
+    if (surface == nullptr) throw std::runtime_error("Surface not found");
+    
     Acts::Result<Acts::Vector2> lpResult =
         surface->globalToLocal(geometryContext(), globalPos, {0, 0, 0}, 0.5_um);
     if (!lpResult.ok())

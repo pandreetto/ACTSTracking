@@ -18,12 +18,11 @@ const int32_t GeometryIdMappingTool::OuterTrackerBarrel = 5;
 const int32_t GeometryIdMappingTool::OuterTrackerEndCapPositive = 6;
 
 const std::unordered_map<uint32_t, uint32_t>
-    GeometryIdMappingTool::NLad_VertexBarrel = {{0, 5}, {1, 5}, {2, 5}, {3, 5},
-                                                {4, 5}, {5, 5}, {6, 5}, {7, 5}};
+    GeometryIdMappingTool::NLad_VertexBarrel = {{0, 5}, {2, 5}, {4, 5}, {6, 5}};
 
 const std::unordered_map<uint32_t, uint32_t>
     GeometryIdMappingTool::NRng_VertexEndCap = {
-        {0, 16}, {1, 16}, {2, 16}, {3, 16}, {4, 16}, {5, 16}, {6, 16}, {7, 16}};
+        {2, 16}, {4, 16}, {6, 16}, {8,16}};
 
 const std::unordered_map<uint32_t, uint32_t>
     GeometryIdMappingTool::NLad_InnerTrackerBarrel = {
@@ -117,18 +116,23 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
                            : signSystemID;
   geometry_id |= volume_id << (14 * 4);
 
+
+  std::cout << systemID << " " << layerID << " " << sideID << " " << ladderID << " " << moduleID << std::endl;
+
   // Layer ID is counting within sub detector, with pairings depending on the
   // sub detector
   uint64_t layer_id;
   switch (signSystemID) {
     case VertexEndCapNegative:
-      layer_id = 2 * (7 - layerID) + 2;
+      //layer_id = 2 * (7 - layerID) + 2;
+      layer_id = (0 - layerID) + 8;
       break;
     case VertexEndCapPositive:
-      layer_id = 2 * (layerID) + 2;
+      //layer_id = 2 * (layerID) + 2;
+      layer_id = layerID + 2;
       break;
     case VertexBarrel:
-      layer_id = 2 * (layerID + 1);
+      layer_id = layerID + 2; 
       break;
     case InnerTrackerBarrel:
     case OuterTrackerBarrel: {

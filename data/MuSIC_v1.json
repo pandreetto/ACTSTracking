@@ -57,7 +57,7 @@
 	    },
 	    "geo-tgeo-layer-z-ranges": {
 		"negative": {
-		    "lower": -305.0,
+		    "lower": -405.0,
 		    "upper": -140.0
 		},
 		"central": {
@@ -66,7 +66,7 @@
 		},
 		"positive": {
 		    "lower": 140.0,
-		    "upper": 305.0
+		    "upper": 405.0
 		}
 	    },
 	    "geo-tgeo-layer-r-split": {
