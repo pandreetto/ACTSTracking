@@ -22,7 +22,7 @@ const std::unordered_map<uint32_t, uint32_t>
 
 const std::unordered_map<uint32_t, uint32_t>
     GeometryIdMappingTool::NRng_VertexEndCap = {
-        {2, 16}, {4, 16}, {6, 16}, {8,16}};
+        {0, 16}, {2, 16}, {4, 16}, {6,16}};
 
 const std::unordered_map<uint32_t, uint32_t>
     GeometryIdMappingTool::NLad_InnerTrackerBarrel = {
@@ -116,8 +116,8 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
                            : signSystemID;
   geometry_id |= volume_id << (14 * 4);
 
-
-  std::cout << systemID << " " << layerID << " " << sideID << " " << ladderID << " " << moduleID << std::endl;
+  //debug
+  //std::cout << systemID << " " << layerID << " " << sideID << " " << ladderID << " " << moduleID << std::endl;
 
   // Layer ID is counting within sub detector, with pairings depending on the
   // sub detector

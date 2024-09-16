@@ -58,14 +58,14 @@
 	    "geo-tgeo-layer-z-ranges": {
 		"negative": {
 		    "lower": -405.0,
-		    "upper": -140.0
+		    "upper": -150.0
 		},
 		"central": {
-		    "lower": -140.0,
-		    "upper": 140.0
+		    "lower": -150.0,
+		    "upper": 150.0
 		},
 		"positive": {
-		    "lower": 140.0,
+		    "lower": 150.0,
 		    "upper": 405.0
 		}
 	    },
@@ -131,7 +131,7 @@
 	    },
 	    "geo-tgeo-layer-z-ranges": {
 		"negative": {
-		    "lower": -600.0,
+		    "lower": -650.0,
 		    "upper": -500.0
 		},
 		"central": {
@@ -140,7 +140,7 @@
 		},
 		"positive": {
 		    "lower": 500.0,
-		    "upper": 600.0
+		    "upper": 650.0
 		}
 	    },
 	    "geo-tgeo-layer-r-split": {
