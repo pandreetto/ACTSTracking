@@ -61,10 +61,12 @@ class ACTSProcBase : public marlin::Processor {
   std::string _matFile{};
 
   //! Path to tracker geometry file
-  std::string _tgeoFile = "data/MuColl_v1.root";
+  std::string _tgeoFile = "data/MuSIC_v1.root";
 
   //! Path to tracker geometry json file
-  std::string _tgeodescFile = "data/MuColl_v1.json";
+  std::string _tgeodescFile = "data/MuSIC_v1.json";
+
+  std::string _detSchema = "MuSIC_v1";
 
   std::shared_ptr<ACTSTracking::GeometryIdMappingTool> geoIDMappingTool() const;
 

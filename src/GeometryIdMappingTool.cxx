@@ -4,6 +4,8 @@
 
 using namespace ACTSTracking;
 
+using det_mod_map = GeometryIdMappingTool::det_mod_map;
+
 const int32_t GeometryIdMappingTool::VertexEndCapNegative = -2;
 const int32_t GeometryIdMappingTool::VertexBarrel = 1;
 const int32_t GeometryIdMappingTool::VertexEndCapPositive = 2;
@@ -17,38 +19,55 @@ const int32_t GeometryIdMappingTool::OuterTrackerEndCapNegative = -6;
 const int32_t GeometryIdMappingTool::OuterTrackerBarrel = 5;
 const int32_t GeometryIdMappingTool::OuterTrackerEndCapPositive = 6;
 
-const std::unordered_map<uint32_t, uint32_t>
-    GeometryIdMappingTool::NLad_VertexBarrel = {{0, 5}, {2, 5}, {4, 5}, {6, 5}};
-
-const std::unordered_map<uint32_t, uint32_t>
-    GeometryIdMappingTool::NRng_VertexEndCap = {
-        {0, 16}, {2, 16}, {4, 16}, {6,16}};
-
-const std::unordered_map<uint32_t, uint32_t>
-    GeometryIdMappingTool::NLad_InnerTrackerBarrel = {
-        {0, 32},
-        {1, 32},
+const det_mod_map GeometryIdMappingTool::NLad_VertexBarrel = {
+  { GeometryIdMappingTool::DetSchema::MuColl_v1, {
+    {0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5}, {5, 5}, {6, 5}, {7, 5}} },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, {
+    {0, 5}, {2, 5}, {4, 5}, {6, 5}} }
 };
 
-const std::unordered_map<uint32_t, uint32_t>
-    GeometryIdMappingTool::NRng_InnerTrackerEndCap = {
-        {0, 26},
+const det_mod_map GeometryIdMappingTool::NRng_VertexEndCap = {
+  { GeometryIdMappingTool::DetSchema::MuColl_v1, {
+    {0, 16}, {1, 16}, {2, 16}, {3, 16}, {4, 16}, {5, 16}, {6, 16}, {7, 16}} },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, {
+    {0, 16}, {2, 16}, {4, 16}, {6,16} } }
 };
 
-const std::unordered_map<uint32_t, uint32_t>
-    GeometryIdMappingTool::NLad_OuterInnerTrackerBarrel = {{2, 46}};
+const det_mod_map GeometryIdMappingTool::NLad_InnerTrackerBarrel = {
+  { GeometryIdMappingTool::DetSchema::MuColl_v1, { {0, 32}, {1, 32} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { {0, 32}, {1, 32} } }
+};
 
-const std::unordered_map<uint32_t, uint32_t>
-    GeometryIdMappingTool::NRng_OuterInnerTrackerEndCap = {
-        {1, 26}, {2, 26}, {3, 26}, {4, 26}, {5, 26}, {6, 26}};
+const det_mod_map GeometryIdMappingTool::NRng_InnerTrackerEndCap = {
+  { GeometryIdMappingTool::DetSchema::MuColl_v1, { {0, 26} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { {0, 26} } }
+};
 
-const std::unordered_map<uint32_t, uint32_t>
-    GeometryIdMappingTool::NLad_OuterTrackerBarrel = {
-        {0, 84}, {1, 84}, {2, 84}};
+const det_mod_map GeometryIdMappingTool::NLad_OuterInnerTrackerBarrel = {
+  { GeometryIdMappingTool::DetSchema::MuColl_v1, { {2, 46} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { {2, 46} } }
+};
 
-const std::unordered_map<uint32_t, uint32_t>
-    GeometryIdMappingTool::NRng_OuterTrackerEndCap = {
-        {0, 48}, {1, 48}, {2, 48}, {3, 48}, {4, 48}, {5, 48}, {6, 48}, {7, 48}};
+const det_mod_map GeometryIdMappingTool::NRng_OuterInnerTrackerEndCap = {
+  { GeometryIdMappingTool::DetSchema::MuColl_v1, { 
+    {1, 26}, {2, 26}, {3, 26}, {4, 26}, {5, 26}, {6, 26} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { 
+    {1, 26}, {2, 26}, {3, 26}, {4, 26}, {5, 26}, {6, 26} } }
+};
+
+const det_mod_map GeometryIdMappingTool::NLad_OuterTrackerBarrel = {
+  { GeometryIdMappingTool::DetSchema::MuColl_v1, { 
+    {0, 84}, {1, 84}, {2, 84} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { 
+    {0, 84}, {1, 84}, {2, 84} } }
+};
+
+const det_mod_map GeometryIdMappingTool::NRng_OuterTrackerEndCap = {
+  { GeometryIdMappingTool::DetSchema::MuColl_v1, { 
+    {0, 48}, {1, 48}, {2, 48}, {3, 48}, {4, 48}, {5, 48}, {6, 48}, {7, 48} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { 
+    {0, 48}, {1, 48}, {2, 48}, {3, 48}, {4, 48}, {5, 48}, {6, 48}, {7, 48} } }
+};
 
 const std::unordered_map<int32_t, uint32_t> GeometryIdMappingTool::VolumeMap = {
     {VertexEndCapNegative, 13},
@@ -65,8 +84,11 @@ const std::unordered_map<int32_t, uint32_t> GeometryIdMappingTool::VolumeMap = {
     {OuterTrackerEndCapPositive, 25},
 };
 
-GeometryIdMappingTool::GeometryIdMappingTool(const std::string& encoderString)
-    : _encoderString(encoderString) {}
+GeometryIdMappingTool::GeometryIdMappingTool(const std::string& encoderString,
+                                             DetSchema dType)
+    : _encoderString(encoderString),
+      det_type(dType)
+{}
 
 uint64_t GeometryIdMappingTool::getGeometryID(const lcio::SimTrackerHit* hit) {
   UTIL::CellIDDecoder<lcio::SimTrackerHit> decoder(_encoderString);
@@ -124,15 +146,16 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
   uint64_t layer_id;
   switch (signSystemID) {
     case VertexEndCapNegative:
-      //layer_id = 2 * (7 - layerID) + 2;
-      layer_id = (0 - layerID) + 8;
+      if (det_type == GeometryIdMappingTool::DetSchema::MuColl_v1) layer_id = 2 * (7 - layerID) + 2;
+      else layer_id = (0 - layerID) + 8;
       break;
     case VertexEndCapPositive:
-      //layer_id = 2 * (layerID) + 2;
-      layer_id = layerID + 2;
+      if (det_type == GeometryIdMappingTool::DetSchema::MuColl_v1) layer_id = 2 * (layerID) + 2;
+      else layer_id = layerID + 2;
       break;
     case VertexBarrel:
-      layer_id = layerID + 2; 
+      if (det_type == GeometryIdMappingTool::DetSchema::MuColl_v1) layer_id = 2 * (layerID + 1);
+      else layer_id = layerID + 2; 
       break;
     case InnerTrackerBarrel:
     case OuterTrackerBarrel: {
@@ -175,19 +198,20 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
   uint64_t sensitive_id;
   switch (signSystemID) {
     case VertexBarrel:
-      sensitive_id = NLad_VertexBarrel.at(layerID) * ladderID + moduleID + 1;
+      sensitive_id = 
+          NLad_VertexBarrel.at(det_type).at(layerID) * ladderID + moduleID + 1;
       break;
     case InnerTrackerBarrel:
       sensitive_id =
-          NLad_InnerTrackerBarrel.at(layerID) * ladderID + moduleID + 1;
+          NLad_InnerTrackerBarrel.at(det_type).at(layerID) * ladderID + moduleID + 1;
       break;
     case OuterInnerTrackerBarrel:
       sensitive_id =
-          NLad_OuterInnerTrackerBarrel.at(layerID) * ladderID + moduleID + 1;
+          NLad_OuterInnerTrackerBarrel.at(det_type).at(layerID) * ladderID + moduleID + 1;
       break;
     case OuterTrackerBarrel:
       sensitive_id =
-          NLad_OuterTrackerBarrel.at(layerID) * ladderID + moduleID + 1;
+          NLad_OuterTrackerBarrel.at(det_type).at(layerID) * ladderID + moduleID + 1;
       break;
 
     case VertexEndCapNegative:
@@ -200,19 +224,19 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
     case InnerTrackerEndCapNegative:
     case InnerTrackerEndCapPositive:
       sensitive_id =
-          NRng_InnerTrackerEndCap.at(layerID) * ladderID + moduleID + 1;
+          NRng_InnerTrackerEndCap.at(det_type).at(layerID) * ladderID + moduleID + 1;
       break;
 
     case OuterInnerTrackerEndCapNegative:
     case OuterInnerTrackerEndCapPositive:
       sensitive_id =
-          NRng_OuterInnerTrackerEndCap.at(layerID) * ladderID + moduleID + 1;
+          NRng_OuterInnerTrackerEndCap.at(det_type).at(layerID) * ladderID + moduleID + 1;
       break;
 
     case OuterTrackerEndCapNegative:
     case OuterTrackerEndCapPositive:
       sensitive_id =
-          NRng_OuterTrackerEndCap.at(layerID) * ladderID + moduleID + 1;
+          NRng_OuterTrackerEndCap.at(det_type).at(layerID) * ladderID + moduleID + 1;
       break;
 
     default:

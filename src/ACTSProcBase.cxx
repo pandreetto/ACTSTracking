@@ -25,6 +25,7 @@
 #include "Helpers.hxx"
 
 using namespace ACTSTracking;
+using DetSchema = GeometryIdMappingTool::DetSchema;
 
 ACTSProcBase::ACTSProcBase(const std::string& procname) : Processor(procname) {
   // configuration
@@ -38,6 +39,8 @@ ACTSProcBase::ACTSProcBase(const std::string& procname) : Processor(procname) {
   registerProcessorParameter("TGeoDescFile", "Path to the JSON file describing the subdetectors.",
                              _tgeodescFile, _tgeodescFile);
 
+  registerProcessorParameter("DetectorSchema", "Detector schema name (MuColl_v1, MuSIC_v1).",
+                             _detSchema, _detSchema);
 }
 
 std::shared_ptr<GeometryIdMappingTool> ACTSProcBase::geoIDMappingTool() const {
@@ -95,8 +98,11 @@ void ACTSProcBase::init() {
       << " -------------------------------------" << std::endl;
 
   // Initialize mapping tool
+  DetSchema dSchema = DetSchema::MuSIC_v1;
+  if (_detSchema == "MuColl_v1") dSchema = DetSchema::MuColl_v1;
+
   _geoIDMappingTool = std::make_shared<GeometryIdMappingTool>(
-      lcio::LCTrackerCellID::encoding_string());
+      lcio::LCTrackerCellID::encoding_string(), dSchema);
 }
 
 void ACTSProcBase::processRunHeader(LCRunHeader* run) {}
