@@ -536,6 +536,13 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   auto spacePointsGrouping = Acts::CylindricalBinnedGroup<SSPoint>(
       std::move(grid), bottomBinFinder, topBinFinder);
 
+  Acts::SeedFinder<SSPoint> finder(finderCfg);
+  decltype(finder)::SeedingState state;
+  std::vector<Acts::Seed<SSPoint>> seeds;
+
+  state.spacePointData.resize(spacePointPtrs.size(),
+      finderCfg.useDetailedDoubleMeasurementInfo);
+
   float up = Acts::clampValue<float>(
       std::floor(rRangeSPExtent.max(Acts::binR) / 2) * 2);
   const Acts::Range1D<float> rMiddleSPRange(
@@ -544,32 +551,15 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
       up - finderCfg.deltaRMiddleMaxSPRange);                  // TODO investigate
 
   std::vector<Acts::BoundTrackParameters> paramseeds;
-  using SeedPointList = std::vector<Acts::Seed<SSPoint>>;
-  std::vector<SeedPointList> seeds_buffer;
 
-  #pragma omp parallel for
   for (const auto [bottom, middle, top] : spacePointsGrouping)
   {
-    SeedPointList seeds;
-
-    Acts::SeedFinder<SSPoint> finder(finderCfg);
-    decltype(finder)::SeedingState state;
-
-    state.spacePointData.resize(spacePointPtrs.size(),
-        finderCfg.useDetailedDoubleMeasurementInfo);
+    seeds.clear();
 
     finder.createSeedsForGroup(
         finderOpts, state, spacePointsGrouping.grid(),
         std::back_inserter(seeds), bottom, middle, top, rMiddleSPRange);
 
-     #pragma omp critical
-     {
-       seeds_buffer.push_back(std::move(seeds));
-     }
-  }
-
-  for (auto seeds : seeds_buffer)
-  {
     //
     // Loop over seeds and get track parameters
     paramseeds.clear();
