@@ -284,15 +284,11 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     // Convert to Acts hit
     const Acts::Surface *surface = trackingGeometry()->findSurface(hit.first);
     
-    std::cout << "hit: " << hit.first.volume() << " " << hit.first.boundary() << " " << hit.first.layer() << " " << hit.first.approach() << " " << hit.first.sensitive() << std::endl;
-    
     if (surface == nullptr) throw std::runtime_error("Surface not found");
 
     const double *lcioglobalpos = hit.second->getPosition();
     Acts::Vector3 globalPos = {lcioglobalpos[0], lcioglobalpos[1],
                                lcioglobalpos[2]};
-    //debug
-    //std::cout << "globalPos: " << globalPos[0] << " " << globalPos[1] << " " << globalPos[2] << std::endl;
     
     Acts::Result<Acts::Vector2> lpResult =
         surface->globalToLocal(geometryContext(), globalPos, {0, 0, 0}, 0.5_um);
@@ -320,9 +316,6 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
     measurements.push_back(meas);
     sourceLinks.emplace_hint(sourceLinks.end(), sourceLink);
-
-    std::cout << surface->geometryId() << std::endl;
-    std::cout << _seedGeometrySelection.check(surface->geometryId()) << std::endl;
 
     //
     // Seed selection and conversion to useful coordinates
@@ -669,41 +662,29 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     using TrackContainer = Acts::TrackContainer<Acts::VectorTrackContainer,
                                                 Acts::VectorMultiTrajectory,
                                                 std::shared_ptr>;
-    auto trackContainer = std::make_shared<Acts::VectorTrackContainer>();
-    auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
-    TrackContainer tracks(trackContainer, trackStateContainer);
 
+    #pragma omp parallel for
     for (std::size_t iseed = 0; iseed < paramseeds.size(); ++iseed) {
 
-      tracks.clear();
+      auto trackContainer = std::make_shared<Acts::VectorTrackContainer>();
+      auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
+      TrackContainer tracks(trackContainer, trackStateContainer);
 
       auto result = trackFinder.findTracks(paramseeds.at(iseed), ckfOptions, tracks);
       if (result.ok()) {
         const auto& fitOutput = result.value();
         for (const TrackContainer::TrackProxy& trackTip : fitOutput)
         {
-          //
-          // Helpful debug output
-          streamlog_out(DEBUG) << "Trajectory Summary" << std::endl;
-          streamlog_out(DEBUG)
-              << "\tchi2Sum       " << trackTip.chi2() << std::endl;
-          streamlog_out(DEBUG)
-              << "\tNDF           " << trackTip.nDoF() << std::endl;
-          streamlog_out(DEBUG)
-              << "\tnHoles        " << trackTip.nHoles() << std::endl;
-          streamlog_out(DEBUG)
-              << "\tnMeasurements " << trackTip.nMeasurements() << std::endl;
-          streamlog_out(DEBUG)
-              << "\tnOutliers     " << trackTip.nOutliers() << std::endl;
-          streamlog_out(DEBUG)
-              << "\tnStates       " << trackTip.nTrackStates() << std::endl;
-
           // Make track object
           EVENT::Track *track = ACTSTracking::ACTS2Marlin_track(
-              trackTip, magneticField(), magCache, _caloFaceR, _caloFaceZ, geometryContext(), magneticFieldContext(), trackingGeometry());
+              trackTip, magneticField(), magCache, _caloFaceR, _caloFaceZ,
+              geometryContext(), magneticFieldContext(), trackingGeometry());
 
           // Save results
-          trackCollection->addElement(track);
+          #pragma omp critical
+          {
+            trackCollection->addElement(track);
+          }
         }
       } else {
         streamlog_out(WARNING)

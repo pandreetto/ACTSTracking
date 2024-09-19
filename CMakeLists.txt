@@ -24,6 +24,14 @@ FIND_PACKAGE( ROOT REQUIRED)
 
 FIND_PACKAGE( Acts REQUIRED COMPONENTS Core PluginJson PluginTGeo )
 
+FIND_PACKAGE(OpenMP)
+OPTION(OpenMP_ACTIVE "Activate OpenMP parallel compilation" ON)
+IF(OPENMP_FOUND AND OpenMP_ACTIVE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
+ENDIF()
+
+
 INCLUDE(GNUInstallDirs)
 
 ### DOCUMENTATION ###########################################################
