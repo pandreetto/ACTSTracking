@@ -19,19 +19,17 @@ namespace ACTSTracking {
  */
 inline bool tracks_equal(const edm4hep::Track& trk1, const edm4hep::Track& trk2) {
 	// Get an iterator for the Track hits of the first Track
-	const auto& hits1 = trk1.getTrackerHits();
-	uint32_t hitOlap = 0;
-	// Loop through each track hit and see if it overlaps with the second track
-	for (const auto& hit1 : hits1) {
-		if (std::find(trk2.trackerHits_begin(), trk2.trackerHits_end(), hit1) != trk1.trackerHits_end()) {
-			hitOlap++; // If it does overlap, increment hitOlap
-		}
-	}
+        uint32_t hitOlap = 0;
+        // Loop through each track hit and see if it overlaps with the second track
+        for (size_t itrackHit = 0; itrackHit < trk1.trackerHits_size(); ++itrackHit) {
+                if (std::find(trk2.trackerHits_begin(), trk2.trackerHits_end(), trk1.getTrackerHits(itrackHit)) != trk2.trackerHits_end()) {
+                        hitOlap++; // If it does overlap, increment hitOlap
+                }
+        }
 
-	// Smaller track count
-	uint32_t size = std::min(hits1.size(), trk2.getTrackerHits().size());
-
-	return 2 * hitOlap > size;  // half of smaller track belong to larger track
+        // Smaller track count
+        uint32_t size = std::min(trk1.trackerHits_size(), trk2.trackerHits_size());
+        return 2 * hitOlap > size;  // half of smaller track belong to larger track
 }
 
 /**
