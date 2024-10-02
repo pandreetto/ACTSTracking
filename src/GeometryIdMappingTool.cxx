@@ -23,35 +23,44 @@ const det_mod_map GeometryIdMappingTool::NLad_VertexBarrel = {
   { GeometryIdMappingTool::DetSchema::MuColl_v1, {
     {0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5}, {5, 5}, {6, 5}, {7, 5}} },
   { GeometryIdMappingTool::DetSchema::MuSIC_v1, {
-    {0, 5}, {2, 5}, {4, 5}, {6, 5}} }
+    {0, 5}, {2, 5}, {4, 5}, {6, 5}} },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v2, {
+    {0, 5}, {2, 5}, {4, 5}, {6, 5}, {8, 5}} },
 };
 
 const det_mod_map GeometryIdMappingTool::NRng_VertexEndCap = {
   { GeometryIdMappingTool::DetSchema::MuColl_v1, {
     {0, 16}, {1, 16}, {2, 16}, {3, 16}, {4, 16}, {5, 16}, {6, 16}, {7, 16}} },
   { GeometryIdMappingTool::DetSchema::MuSIC_v1, {
+    {0, 16}, {2, 16}, {4, 16}, {6,16} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v2, {
     {0, 16}, {2, 16}, {4, 16}, {6,16} } }
 };
 
 const det_mod_map GeometryIdMappingTool::NLad_InnerTrackerBarrel = {
   { GeometryIdMappingTool::DetSchema::MuColl_v1, { {0, 32}, {1, 32} } },
-  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { {0, 32}, {1, 32} } }
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { {0, 32}, {1, 32} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v2, { {0, 32}, {1, 32} } }
 };
 
 const det_mod_map GeometryIdMappingTool::NRng_InnerTrackerEndCap = {
   { GeometryIdMappingTool::DetSchema::MuColl_v1, { {0, 26} } },
-  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { {0, 26} } }
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { {0, 26} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v2, { {0, 26} } }
 };
 
 const det_mod_map GeometryIdMappingTool::NLad_OuterInnerTrackerBarrel = {
   { GeometryIdMappingTool::DetSchema::MuColl_v1, { {2, 46} } },
-  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { {2, 46} } }
+  { GeometryIdMappingTool::DetSchema::MuSIC_v1, { {2, 46} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v2, { {2, 46} } }
 };
 
 const det_mod_map GeometryIdMappingTool::NRng_OuterInnerTrackerEndCap = {
   { GeometryIdMappingTool::DetSchema::MuColl_v1, { 
     {1, 26}, {2, 26}, {3, 26}, {4, 26}, {5, 26}, {6, 26} } },
   { GeometryIdMappingTool::DetSchema::MuSIC_v1, { 
+    {1, 26}, {2, 26}, {3, 26}, {4, 26}, {5, 26}, {6, 26} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v2, { 
     {1, 26}, {2, 26}, {3, 26}, {4, 26}, {5, 26}, {6, 26} } }
 };
 
@@ -59,6 +68,8 @@ const det_mod_map GeometryIdMappingTool::NLad_OuterTrackerBarrel = {
   { GeometryIdMappingTool::DetSchema::MuColl_v1, { 
     {0, 84}, {1, 84}, {2, 84} } },
   { GeometryIdMappingTool::DetSchema::MuSIC_v1, { 
+    {0, 84}, {1, 84}, {2, 84} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v2, { 
     {0, 84}, {1, 84}, {2, 84} } }
 };
 
@@ -66,6 +77,8 @@ const det_mod_map GeometryIdMappingTool::NRng_OuterTrackerEndCap = {
   { GeometryIdMappingTool::DetSchema::MuColl_v1, { 
     {0, 48}, {1, 48}, {2, 48}, {3, 48}, {4, 48}, {5, 48}, {6, 48}, {7, 48} } },
   { GeometryIdMappingTool::DetSchema::MuSIC_v1, { 
+    {0, 48}, {1, 48}, {2, 48}, {3, 48}, {4, 48}, {5, 48}, {6, 48}, {7, 48} } },
+  { GeometryIdMappingTool::DetSchema::MuSIC_v2, { 
     {0, 48}, {1, 48}, {2, 48}, {3, 48}, {4, 48}, {5, 48}, {6, 48}, {7, 48} } }
 };
 

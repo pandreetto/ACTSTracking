@@ -98,7 +98,8 @@ void ACTSProcBase::init() {
       << " -------------------------------------" << std::endl;
 
   // Initialize mapping tool
-  DetSchema dSchema = DetSchema::MuSIC_v1;
+  DetSchema dSchema = DetSchema::MuSIC_v2; // default configuration is MuSIC_v2
+  if (_detSchema == "MuSIC_v1") dSchema = DetSchema::MuSIC_v1;
   if (_detSchema == "MuColl_v1") dSchema = DetSchema::MuColl_v1;
 
   _geoIDMappingTool = std::make_shared<GeometryIdMappingTool>(
