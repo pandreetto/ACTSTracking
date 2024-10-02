@@ -19,7 +19,7 @@ namespace ACTSTracking {
  */
 class GeometryIdMappingTool {
  public:
-  enum class DetSchema : char { MuColl_v1, MuSIC_v1 };
+  enum class DetSchema : char { MuColl_v1, MuSIC_v1, MuSIC_v2 };
 
   using modules_map = std::unordered_map<uint32_t, uint32_t>;
   using det_mod_map = std::unordered_map<DetSchema, modules_map>;
