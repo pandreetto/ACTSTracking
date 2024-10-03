@@ -39,7 +39,7 @@ ACTSProcBase::ACTSProcBase(const std::string& procname) : Processor(procname) {
   registerProcessorParameter("TGeoDescFile", "Path to the JSON file describing the subdetectors.",
                              _tgeodescFile, _tgeodescFile);
 
-  registerProcessorParameter("DetectorSchema", "Detector schema name (MuColl_v1, MuSIC_v1).",
+  registerProcessorParameter("DetectorSchema", "Detector schema name (MuColl_v1, MuSIC_v1, MuSIC_v2).",
                              _detSchema, _detSchema);
 }
 
