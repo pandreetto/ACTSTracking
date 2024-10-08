@@ -230,12 +230,6 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   }
 
   //
-  // Caches
-  Acts::MagneticFieldContext magFieldContext = Acts::MagneticFieldContext();
-  Acts::MagneticFieldProvider::Cache magCache =
-      magneticField()->makeCache(magFieldContext);
-
-  //
   // Initialize track finder
   using Updater = Acts::GainMatrixUpdater;
   using Smoother = Acts::GainMatrixSmoother;

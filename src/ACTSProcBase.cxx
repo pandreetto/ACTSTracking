@@ -97,6 +97,12 @@ void ACTSProcBase::init() {
   // Initialize mapping tool
   _geoIDMappingTool = std::make_shared<GeometryIdMappingTool>(
       lcio::LCTrackerCellID::encoding_string());
+
+  //
+  // Caches
+  Acts::MagneticFieldContext magFieldContext = Acts::MagneticFieldContext();
+  Acts::MagneticFieldProvider::Cache magCache =
+      magneticField()->makeCache(magFieldContext);
 }
 
 void ACTSProcBase::processRunHeader(LCRunHeader* run) {}

@@ -78,6 +78,8 @@ class ACTSProcBase : public marlin::Processor {
   //! Find surface for hit
   const Acts::Surface* findSurface(const EVENT::TrackerHit* hit) const;
 
+  Acts::MagneticFieldProvider::Cache magCache;
+
  private:
   std::shared_ptr<ACTSTracking::GeometryIdMappingTool> _geoIDMappingTool;
 

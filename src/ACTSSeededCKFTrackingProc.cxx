@@ -16,8 +16,6 @@
 #include <Acts/Propagator/EigenStepper.hpp>
 #include <Acts/Propagator/Navigator.hpp>
 #include <Acts/Propagator/Propagator.hpp>
-// #include <Acts/Seeding/BinFinder.hpp>
-// #include <Acts/Seeding/BinnedSPGroup.hpp>
 #include <Acts/Seeding/EstimateTrackParamsFromSeed.hpp>
 #include <Acts/Seeding/SeedFinder.hpp>
 #include <Acts/Seeding/SpacePointGrid.hpp>
@@ -358,12 +356,6 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   //
   // Run seeding + tracking algorithms
   //
-
-  //
-  // Caches
-  Acts::MagneticFieldContext magFieldContext = Acts::MagneticFieldContext();
-  Acts::MagneticFieldProvider::Cache magCache =
-      magneticField()->makeCache(magFieldContext);
 
   //
   // Initialize track finder
