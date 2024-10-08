@@ -648,6 +648,13 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     //
     // Find the tracks
     if (!_runCKF) continue;
+#ifdef TBB_ENABLED
+
+    tbb::parallel_for(tbb::blocked_range<std::size_t>(0, paramseeds.size()),
+        TrackFinderThread(*this, paramseeds, trackCollection,
+                          trackFinder, ckfOptions));
+
+#else
 
     using TrackContainer = Acts::TrackContainer<Acts::VectorTrackContainer,
                                                 Acts::VectorMultiTrajectory,
@@ -694,6 +701,9 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
         _fitFails++;
       }
     }
+
+#endif //TBB_ENABLED
+
   }
 
   // Save the output seed collection
@@ -720,3 +730,45 @@ LCCollection *ACTSSeededCKFTrackingProc::getCollection(
     return nullptr;
   }
 }
+
+#ifdef TBB_ENABLED
+void ACTSSeededCKFTrackingProc::TrackFinderThread::operator()
+    (const tbb::blocked_range<std::size_t>& prange) const
+{
+  using TrackContainer = Acts::TrackContainer<Acts::VectorTrackContainer,
+                                              Acts::VectorMultiTrajectory,
+                                              std::shared_ptr>;
+
+  for (std::size_t iseed = prange.begin(); iseed != prange.end(); ++iseed)
+  {
+    auto trackContainer = std::make_shared<Acts::VectorTrackContainer>();
+    auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
+    TrackContainer tracks(trackContainer, trackStateContainer);
+
+    auto result = trackFinder.findTracks(paramseeds.at(iseed), ckfOptions, tracks);
+    if (result.ok())
+    {
+      const auto& fitOutput = result.value();
+      for (const TrackContainer::TrackProxy& trackTip : fitOutput)
+      {
+        EVENT::Track *track = ACTSTracking::ACTS2Marlin_track(
+            trackTip, processor.magneticField(), processor.magCache,
+            processor._caloFaceR, processor._caloFaceZ,
+            processor.geometryContext(),
+            processor.magneticFieldContext(),
+            processor.trackingGeometry());
+
+        {
+          tbb::queuing_mutex::scoped_lock lock(processor.p_mutex);
+          trackCollection->addElement(track);
+        }
+      }
+    }
+    else
+    {
+      tbb::queuing_mutex::scoped_lock lock(processor.p_mutex);
+      processor._fitFails++;
+    }
+  }
+}
+#endif //TBB_ENABLED

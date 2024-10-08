@@ -24,6 +24,14 @@ FIND_PACKAGE( ROOT REQUIRED)
 
 FIND_PACKAGE( Acts REQUIRED COMPONENTS Core PluginJson PluginTGeo )
 
+OPTION( TBB_ENABLED "Use Intel TBB for internal parallelization" OFF )
+IF( TBB_ENABLED )
+    FIND_PACKAGE( TBB REQUIRED )
+    IF( TBB_FOUND )
+        MESSAGE( STATUS "Found TBB library")
+    ENDIF()
+ENDIF()
+
 INCLUDE(GNUInstallDirs)
 
 ### DOCUMENTATION ###########################################################
@@ -62,6 +70,11 @@ TARGET_INCLUDE_DIRECTORIES(ACTSTracking
 TARGET_LINK_LIBRARIES(ACTSTracking
   ${ROOT_LIBRARIES} DD4hep::DDCore
   ActsCore ActsPluginTGeo ActsPluginJson)
+
+IF( TBB_ENABLED AND TBB_FOUND )
+    TARGET_LINK_LIBRARIES(ACTSTracking TBB::tbb)
+    ADD_COMPILE_DEFINITIONS( "TBB_ENABLED" )
+ENDIF()
 
 INSTALL( TARGETS ACTSTracking DESTINATION lib )
 INSTALL( DIRECTORY ACTSTracking DESTINATION include FILES_MATCHING PATTERN "*.hxx" )

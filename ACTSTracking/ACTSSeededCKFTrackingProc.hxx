@@ -10,6 +10,19 @@
 #include "ACTSProcBase.hxx"
 #include "GeometryIdSelector.hxx"
 
+#ifdef TBB_ENABLED
+#include "tbb/tbb.h"
+//#include "tbb/queuing_mutex.h"
+#include <Acts/EventData/TrackParameters.hpp>
+#include <IMPL/LCCollectionVec.h>
+#include <Acts/Propagator/Propagator.hpp>
+#include <Acts/TrackFinding/CombinatorialKalmanFilter.hpp>
+#include <Acts/Propagator/EigenStepper.hpp>
+#include <Acts/Propagator/Navigator.hpp>
+#include "SourceLink.hxx"
+#endif
+
+
 /**
  * This code performs a true pattern recognition by looping over all MC
  * particles and adding all hits associated to them onto a prototrack. This is
@@ -101,6 +114,41 @@ class ACTSSeededCKFTrackingProc : public ACTSProcBase {
   ACTSTracking::GeometryIdSelector _seedGeometrySelection;
 
   uint32_t _fitFails;
+
+#ifdef TBB_ENABLED
+
+  tbb::queuing_mutex p_mutex;
+
+  class TrackFinderThread
+  {
+    using Propagator = Acts::Propagator<Acts::EigenStepper<>, Acts::Navigator>;
+    using CKF = Acts::CombinatorialKalmanFilter<Propagator, Acts::VectorMultiTrajectory>;
+    using TrackFinderOptions =
+      Acts::CombinatorialKalmanFilterOptions<ACTSTracking::SourceLinkAccessor::Iterator,
+                                             Acts::VectorMultiTrajectory>;
+  public:
+    TrackFinderThread(ACTSSeededCKFTrackingProc& proc,
+                      std::vector<Acts::BoundTrackParameters>& pseeds,
+                      LCCollectionVec* tColl,
+                      CKF& tFinder,
+                      TrackFinderOptions& tFinderOpts) :
+      processor(proc),
+      paramseeds(pseeds),
+      trackCollection(tColl),
+      trackFinder(tFinder),
+      ckfOptions(tFinderOpts) {}
+    virtual ~TrackFinderThread() {}
+
+    void operator()(const tbb::blocked_range<std::size_t>& prange) const;
+
+  private:
+    ACTSSeededCKFTrackingProc& processor;
+    std::vector<Acts::BoundTrackParameters>& paramseeds;
+    LCCollectionVec* trackCollection;
+    CKF& trackFinder;
+    TrackFinderOptions& ckfOptions;
+  };
+#endif //TBB_ENABLED
 };
 
 #endif
