@@ -19,10 +19,16 @@ namespace ACTSTracking {
  */
 class GeometryIdMappingTool {
  public:
+  enum class DetSchema : char { MuColl_v1, MuSIC_v1, MuSIC_v2 };
+
+  using modules_map = std::unordered_map<uint32_t, uint32_t>;
+  using det_mod_map = std::unordered_map<DetSchema, modules_map>;
+
   /** Create a mapping tool using the provided encoderString to
    * interpret cell ID's.
    */
-  GeometryIdMappingTool(const std::string& encoderString);
+  GeometryIdMappingTool(const std::string& encoderString,
+                        DetSchema dType = DetSchema::MuSIC_v1);
 
   /** Decode hit
    */
@@ -34,6 +40,7 @@ class GeometryIdMappingTool {
 
  private:
   std::string _encoderString;
+  const DetSchema det_type;
 
   static const std::unordered_map<int32_t, uint32_t> VolumeMap;
 
@@ -51,18 +58,16 @@ class GeometryIdMappingTool {
   static const int32_t OuterTrackerEndCapPositive;
 
   // Modules in phi ladder per layer
-  static const std::unordered_map<uint32_t, uint32_t> NLad_VertexBarrel;
-  static const std::unordered_map<uint32_t, uint32_t> NLad_InnerTrackerBarrel;
-  static const std::unordered_map<uint32_t, uint32_t>
-      NLad_OuterInnerTrackerBarrel;
-  static const std::unordered_map<uint32_t, uint32_t> NLad_OuterTrackerBarrel;
+  static const det_mod_map NLad_VertexBarrel;
+  static const det_mod_map NLad_InnerTrackerBarrel;
+  static const det_mod_map NLad_OuterInnerTrackerBarrel;
+  static const det_mod_map NLad_OuterTrackerBarrel;
 
   // Modules in ring per layer
-  static const std::unordered_map<uint32_t, uint32_t> NRng_VertexEndCap;
-  static const std::unordered_map<uint32_t, uint32_t> NRng_InnerTrackerEndCap;
-  static const std::unordered_map<uint32_t, uint32_t>
-      NRng_OuterInnerTrackerEndCap;
-  static const std::unordered_map<uint32_t, uint32_t> NRng_OuterTrackerEndCap;
+  static const det_mod_map NRng_VertexEndCap;
+  static const det_mod_map NRng_InnerTrackerEndCap;
+  static const det_mod_map NRng_OuterInnerTrackerEndCap;
+  static const det_mod_map NRng_OuterTrackerEndCap;
 };
 
 }  // namespace ACTSTracking

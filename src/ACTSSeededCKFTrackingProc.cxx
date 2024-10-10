@@ -281,11 +281,17 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
        sortedHits) {
     // Convert to Acts hit
     const Acts::Surface *surface = trackingGeometry()->findSurface(hit.first);
+    
+    std::cout << "hit: " << hit.first.volume() << " " << hit.first.boundary() << " " << hit.first.layer() << " " << hit.first.approach() << " " << hit.first.sensitive() << std::endl;
+    
     if (surface == nullptr) throw std::runtime_error("Surface not found");
 
     const double *lcioglobalpos = hit.second->getPosition();
     Acts::Vector3 globalPos = {lcioglobalpos[0], lcioglobalpos[1],
                                lcioglobalpos[2]};
+    //debug
+    //std::cout << "globalPos: " << globalPos[0] << " " << globalPos[1] << " " << globalPos[2] << std::endl;
+    
     Acts::Result<Acts::Vector2> lpResult =
         surface->globalToLocal(geometryContext(), globalPos, {0, 0, 0}, 0.5_um);
     if (!lpResult.ok())
@@ -312,6 +318,9 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
     measurements.push_back(meas);
     sourceLinks.emplace_hint(sourceLinks.end(), sourceLink);
+
+    std::cout << surface->geometryId() << std::endl;
+    std::cout << _seedGeometrySelection.check(surface->geometryId()) << std::endl;
 
     //
     // Seed selection and conversion to useful coordinates
@@ -350,7 +359,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     }
   }
 
-  streamlog_out(DEBUG0) << "Created " << spacePoints.size() << " space points"
+  streamlog_out(DEBUG) << "Created " << spacePoints.size() << " space points"
                         << std::endl;
 
   //
@@ -562,7 +571,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
       const Acts::Surface* surface = trackingGeometry()->findSurface(geoId);
       if (surface == nullptr) {
         std::cout << "surface with geoID " << geoId
-                  << " is not found in the tracking gemetry";
+                  << " is not found in the tracking geometry";
         continue;
       }
 
