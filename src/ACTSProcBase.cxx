@@ -103,6 +103,7 @@ void ACTSProcBase::init() {
   if (_detSchema == "MuColl_v1") dSchema = DetSchema::MuColl_v1;
 
   _geoIDMappingTool = std::make_shared<GeometryIdMappingTool>(
+      lcio::LCTrackerCellID::encoding_string(), dSchema);
 
   //
   // Caches
