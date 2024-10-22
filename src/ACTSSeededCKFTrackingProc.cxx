@@ -130,9 +130,13 @@ ACTSSeededCKFTrackingProc::ACTSSeededCKFTrackingProc()
                              "Number of bottom bins along phi for seeding",
                              _phiBottomBinLen, 1);
 
-  registerProcessorParameter("SeedFinding_zBinEdges",
-                             "Bins placement along Z for seeding.",
-                             _seedFinding_zBinEdges, StringVec(0));
+  registerProcessorParameter("SeedFinding_zBinSchema",
+                             "Bins schema along Z for seeding.",
+                             _seedFinding_zBinSchema, StringVec(0));
+
+  registerProcessorParameter("SeedFinding_cotThetaMax",
+                             "Max theta angle for seeding",
+                             _seedFinding_cotThetaMax, 7.40627f);
 
   registerProcessorParameter(
       "SeedFinding_CollisionRegion",
@@ -223,6 +227,37 @@ void ACTSSeededCKFTrackingProc::init() {
   if (_seedFinding_deltaRMaxTop == 0.f) _seedFinding_deltaRMaxTop = _seedFinding_deltaRMax;
   if (_seedFinding_deltaRMinBottom == 0.f) _seedFinding_deltaRMinBottom = _seedFinding_deltaRMin;
   if (_seedFinding_deltaRMaxBottom == 0.f) _seedFinding_deltaRMaxBottom = _seedFinding_deltaRMax;
+
+  if (_seedFinding_zBinSchema.size() > 0)
+  {
+    for (std::string token : _seedFinding_zBinSchema)
+    {
+      auto [ pos, ztop_sx, ztop_dx, zbottom_sx, zbottom_dx, err ] = ACTSTracking::parseZBinSchema(token);
+      if (err || pos < -_seedFinding_zMax || pos >= _seedFinding_zMax)
+      {
+        streamlog_out(WARNING) << "Wrong parameter SeedFinding_zBinSchema; default used" << std::endl;
+        _zBinEdges.clear();
+        break;
+      }
+      _zBinEdges.push_back(pos);
+      _ZTopBinSchema.emplace_back(ztop_sx, ztop_dx);
+      _ZBottomBinSchema.emplace_back(zbottom_sx, zbottom_dx);
+    }
+  }
+
+  if (_zBinEdges.empty())
+  {
+    // taken from Acts::CylindricalSpacePointGridCreator::createGrid
+    float tmpf = 2 * _seedFinding_zMax / (_seedFinding_cotThetaMax * _seedFinding_deltaRMax);
+    int num_bins = static_cast<int>(std::max(1.f, std::floor(tmpf)));
+
+    for (int bin = 0; bin < num_bins; bin++)
+    {
+      _zBinEdges.push_back(-_seedFinding_zMax + bin * 2 * _seedFinding_zMax / num_bins);
+      _ZTopBinSchema.emplace_back(_zTopBinLen, _zTopBinLen);
+      _ZBottomBinSchema.emplace_back(_zBottomBinLen, _zBottomBinLen);
+    }
+  }
 }
 
 void ACTSSeededCKFTrackingProc::processRunHeader(LCRunHeader *) {}
@@ -281,9 +316,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
        sortedHits) {
     // Convert to Acts hit
     const Acts::Surface *surface = trackingGeometry()->findSurface(hit.first);
-    
-    std::cout << "hit: " << hit.first.volume() << " " << hit.first.boundary() << " " << hit.first.layer() << " " << hit.first.approach() << " " << hit.first.sensitive() << std::endl;
-    
+
     if (surface == nullptr) throw std::runtime_error("Surface not found");
 
     const double *lcioglobalpos = hit.second->getPosition();
@@ -318,9 +351,6 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
     measurements.push_back(meas);
     sourceLinks.emplace_hint(sourceLinks.end(), sourceLink);
-
-    std::cout << surface->geometryId() << std::endl;
-    std::cout << _seedGeometrySelection.check(surface->geometryId()) << std::endl;
 
     //
     // Seed selection and conversion to useful coordinates
@@ -455,7 +485,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   finderCfg.zMin = -_seedFinding_zMax;
   finderCfg.zMax = _seedFinding_zMax;
   finderCfg.maxSeedsPerSpM = 1;
-  finderCfg.cotThetaMax = 7.40627;  // 2.7 eta;
+  finderCfg.cotThetaMax = _seedFinding_cotThetaMax;
   finderCfg.sigmaScattering = _seedFinding_sigmaScattering;
   finderCfg.radLengthPerSeed = _seedFinding_radLengthPerSeed;
   finderCfg.minPt = _seedFinding_minPt * Acts::UnitConstants::MeV;
@@ -484,25 +514,9 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   gridCfg.zMax = finderCfg.zMax;
   gridCfg.zMin = finderCfg.zMin;
   gridCfg.impactMax = finderCfg.impactMax;
-  if (_seedFinding_zBinEdges.size() > 0)
-  {
-    gridCfg.zBinEdges.resize(_seedFinding_zBinEdges.size());
-    for (int k = 0; k < _seedFinding_zBinEdges.size(); k++)
-    {
-      float pos = std::atof(_seedFinding_zBinEdges[k].c_str());
-      if (pos >= finderCfg.zMin && pos < finderCfg.zMax)
-      {
-        gridCfg.zBinEdges[k] = pos;
-      }
-      else
-      {
-        streamlog_out(WARNING) << "Wrong parameter SeedFinding_zBinEdges; "
-                             << "default used" << std::endl;
-        gridCfg.zBinEdges.clear();
-        break;
-      }
-    }
-  }
+
+  gridCfg.zBinEdges.resize(_zBinEdges.size());
+  for (int k = 0; k < _zBinEdges.size(); k++) gridCfg.zBinEdges[k] = _zBinEdges[k];
 
   Acts::CylindricalSpacePointGridOptions gridOpts;
   gridOpts.bFieldInZ = (*magneticField()->getField(zeropos, magCache))[2];
@@ -529,6 +543,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
       spacePointPtrs.begin(), spacePointPtrs.end(), extractGlobalQuantities,
       rRangeSPExtent);
 
+  //TODO replace with schemas
   const Acts::GridBinFinder<2ul> bottomBinFinder(_phiBottomBinLen, _zBottomBinLen);
   const Acts::GridBinFinder<2ul> topBinFinder(_phiTopBinLen, _zTopBinLen);
 

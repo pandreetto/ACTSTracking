@@ -15,11 +15,15 @@
 
 #include "SourceLink.hxx"
 
+#include <tuple>
+
 namespace ACTSTracking {
 
 using TrackResult = Acts::TrackContainer<Acts::VectorTrackContainer,
                                          Acts::VectorMultiTrajectory,
                                          std::shared_ptr>::TrackProxy;
+
+using ZBinSchema = std::tuple<float, int, int, int, int, bool>;
 
 //! Get path to a resource file
 /**
@@ -123,6 +127,8 @@ EVENT::LCCollection* getCollection(EVENT::LCEvent* evt,
  * \return The ACTS particle hypothesis
  */
 Acts::ParticleHypothesis getParticleHypothesis(const EVENT::MCParticle* mcParticle);
+
+ZBinSchema parseZBinSchema(std::string schema_str);
 
 }  // namespace ACTSTracking
 

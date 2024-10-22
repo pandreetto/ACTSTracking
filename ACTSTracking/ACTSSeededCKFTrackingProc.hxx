@@ -22,6 +22,7 @@
 #include "SourceLink.hxx"
 #endif
 
+#include <utility>
 
 /**
  * This code performs a true pattern recognition by looping over all MC
@@ -91,12 +92,16 @@ class ACTSSeededCKFTrackingProc : public ACTSProcBase {
   float _seedFinding_radLengthPerSeed = 0.1;
   float _seedFinding_minPt = 500;
   float _seedFinding_impactMax = 3 * Acts::UnitConstants::mm;
+  float _seedFinding_cotThetaMax = 7.40627;
 
-  StringVec _seedFinding_zBinEdges;
+  StringVec _seedFinding_zBinSchema;
   int _zTopBinLen = 1;
   int _zBottomBinLen = 1;
   int _phiTopBinLen = 1;
   int _phiBottomBinLen = 1;
+  std::vector<float> _zBinEdges;
+  std::vector<std::pair<int, int>> _ZTopBinSchema;
+  std::vector<std::pair<int, int>> _ZBottomBinSchema;
 
   // Track fit parameters
   double _initialTrackError_pos;
