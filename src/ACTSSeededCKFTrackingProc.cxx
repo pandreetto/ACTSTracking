@@ -240,8 +240,8 @@ void ACTSSeededCKFTrackingProc::init() {
         break;
       }
       _zBinEdges.push_back(pos);
-      _ZTopBinSchema.emplace_back(ztop_sx, ztop_dx);
-      _ZBottomBinSchema.emplace_back(zbottom_sx, zbottom_dx);
+      _ZTopBinSchema.emplace_back(-ztop_sx, ztop_dx);
+      _ZBottomBinSchema.emplace_back(-zbottom_sx, zbottom_dx);
     }
   }
 
@@ -254,8 +254,8 @@ void ACTSSeededCKFTrackingProc::init() {
     for (int bin = 0; bin < num_bins; bin++)
     {
       _zBinEdges.push_back(-_seedFinding_zMax + bin * 2 * _seedFinding_zMax / num_bins);
-      _ZTopBinSchema.emplace_back(_zTopBinLen, _zTopBinLen);
-      _ZBottomBinSchema.emplace_back(_zBottomBinLen, _zBottomBinLen);
+      _ZTopBinSchema.emplace_back(-_zTopBinLen, _zTopBinLen);
+      _ZBottomBinSchema.emplace_back(-_zBottomBinLen, _zBottomBinLen);
     }
   }
 }
@@ -543,9 +543,8 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
       spacePointPtrs.begin(), spacePointPtrs.end(), extractGlobalQuantities,
       rRangeSPExtent);
 
-  //TODO replace with schemas
-  const Acts::GridBinFinder<2ul> bottomBinFinder(_phiBottomBinLen, _zBottomBinLen);
-  const Acts::GridBinFinder<2ul> topBinFinder(_phiTopBinLen, _zTopBinLen);
+  const Acts::GridBinFinder<2ul> bottomBinFinder(_phiBottomBinLen, _ZBottomBinSchema);
+  const Acts::GridBinFinder<2ul> topBinFinder(_phiTopBinLen, _ZTopBinSchema);
 
   auto spacePointsGrouping = Acts::CylindricalBinnedGroup<SSPoint>(
       std::move(grid), bottomBinFinder, topBinFinder);
