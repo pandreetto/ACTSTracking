@@ -249,7 +249,7 @@ void ACTSSeededCKFTrackingProc::init() {
   {
     // taken from Acts::CylindricalSpacePointGridCreator::createGrid
     float tmpf = 2 * _seedFinding_zMax / (_seedFinding_cotThetaMax * _seedFinding_deltaRMax);
-    int num_bins = static_cast<int>(std::max(1.f, std::floor(tmpf)));
+    int num_bins = std::max(2, static_cast<int>(std::max(1.f, std::floor(tmpf))));
 
     for (int bin = 0; bin < num_bins; bin++)
     {
