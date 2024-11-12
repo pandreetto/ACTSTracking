@@ -87,6 +87,7 @@ ACTSDuplicateRemoval::ACTSDuplicateRemoval(const std::string& name, ISvcLocator*
 edm4hep::TrackCollection ACTSDuplicateRemoval::operator()(const edm4hep::TrackCollection& trackCollection) const{
 	// Make output collection
 	edm4hep::TrackCollection outputTracks;
+	outputTracks.setSubsetCollection();
 
 	// Insertion sort input tracks
 	std::vector<edm4hep::Track> sortedInput;
@@ -122,8 +123,7 @@ edm4hep::TrackCollection ACTSDuplicateRemoval::operator()(const edm4hep::TrackCo
 	}
 
 	for (const auto& track : finalTracks) {
-		auto newTrack = outputTracks.create();
-		ACTSTracking::makeMutableTrack(&track, &newTrack);
+		outputTracks.push_back(track);
 	}
 
 	return outputTracks;
