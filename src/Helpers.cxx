@@ -361,7 +361,7 @@ EVENT::Track* ACTS2Marlin_track(
           track->trackStates().push_back(trackStateAtCalo);
         }
         else{
-          std::cout << "Failed propagation! " << std::endl;
+          streamlog_out(DEBUG) << "Failed propagation (>pi/2)! " << resultPropP.error() << std::endl;
         }
     }
     else{
@@ -376,7 +376,7 @@ EVENT::Track* ACTS2Marlin_track(
           track->trackStates().push_back(trackStateAtCalo);
         }
         else{
-          std::cout << "Failed propagation!" << std::endl;
+          streamlog_out(DEBUG) << "Failed propagation (<pi/2)! " << resultPropM.error() << std::endl;
         }      
     }
   }

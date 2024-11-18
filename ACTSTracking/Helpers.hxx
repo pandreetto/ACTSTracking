@@ -5,6 +5,8 @@
 #include <EVENT/Track.h>
 #include <EVENT/TrackState.h>
 
+#include "streamlog/streamlog.h"
+
 #include <Acts/EventData/TrackParameters.hpp>
 #include "Acts/EventData/ParticleHypothesis.hpp"
 #include <Acts/MagneticField/MagneticFieldProvider.hpp>
