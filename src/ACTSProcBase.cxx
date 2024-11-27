@@ -39,7 +39,7 @@ ACTSProcBase::ACTSProcBase(const std::string& procname) : Processor(procname) {
   registerProcessorParameter("TGeoDescFile", "Path to the JSON file describing the subdetectors.",
                              _tgeodescFile, _tgeodescFile);
 
-  registerProcessorParameter("DetectorSchema", "Detector schema name (MuColl_v1, MuSIC_v1, MuSIC_v2).",
+  registerProcessorParameter("DetectorSchema", "Detector schema name (MuColl_v1, MAIA_v0, MuSIC_v1, MuSIC_v2).",
                              _detSchema, _detSchema);
 }
 
@@ -98,9 +98,18 @@ void ACTSProcBase::init() {
       << " -------------------------------------" << std::endl;
 
   // Initialize mapping tool
-  DetSchema dSchema = DetSchema::MuSIC_v2; // default configuration is MuSIC_v2
-  if (_detSchema == "MuSIC_v1") dSchema = DetSchema::MuSIC_v1;
-  if (_detSchema == "MuColl_v1") dSchema = DetSchema::MuColl_v1;
+  DetSchema dSchema;
+  if (_detSchema == "MuSIC_v1") {
+    dSchema = DetSchema::MuSIC_v1;
+  } else if (_detSchema == "MuSIC_v2") {
+    dSchema = DetSchema::MuSIC_v2;
+  } else if (_detSchema == "MAIA_v0") {
+    dSchema = DetSchema::MAIA_v0;
+  } else if (_detSchema == "MuColl_v1") {
+    dSchema = DetSchema::MuColl_v1;
+  } else {
+    dSchema = DetSchema::MuColl_v1;
+  }
 
   _geoIDMappingTool = std::make_shared<GeometryIdMappingTool>(
       lcio::LCTrackerCellID::encoding_string(), dSchema);
