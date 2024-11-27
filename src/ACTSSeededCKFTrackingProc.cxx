@@ -284,7 +284,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     // Convert to Acts hit
     const Acts::Surface *surface = trackingGeometry()->findSurface(hit.first);
     
-    std::cout << "hit: " << hit.first.volume() << " " << hit.first.boundary() << " " << hit.first.layer() << " " << hit.first.approach() << " " << hit.first.sensitive() << std::endl;
+    //std::cout << "hit: " << hit.first.volume() << " " << hit.first.boundary() << " " << hit.first.layer() << " " << hit.first.approach() << " " << hit.first.sensitive() << std::endl;
     
     if (surface == nullptr) throw std::runtime_error("Surface not found");
 
@@ -321,8 +321,8 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     measurements.push_back(meas);
     sourceLinks.emplace_hint(sourceLinks.end(), sourceLink);
 
-    std::cout << surface->geometryId() << std::endl;
-    std::cout << _seedGeometrySelection.check(surface->geometryId()) << std::endl;
+    //std::cout << surface->geometryId() << std::endl;
+    //std::cout << _seedGeometrySelection.check(surface->geometryId()) << std::endl;
 
     //
     // Seed selection and conversion to useful coordinates
