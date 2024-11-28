@@ -284,7 +284,8 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     // Convert to Acts hit
     const Acts::Surface *surface = trackingGeometry()->findSurface(hit.first);
     
-    //std::cout << "hit: " << hit.first.volume() << " " << hit.first.boundary() << " " << hit.first.layer() << " " << hit.first.approach() << " " << hit.first.sensitive() << std::endl;
+    //std::cout << "New hit" << std::endl;
+    //std::cout << "hit: (vol) " << hit.first.volume() << " (layer) " << hit.first.layer() << " (sens) " << hit.first.sensitive() << std::endl;
     
     if (surface == nullptr) throw std::runtime_error("Surface not found");
 
@@ -376,8 +377,8 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
   //
   // Initialize track finder
-  using Updater = Acts::GainMatrixUpdater;
-  using Smoother = Acts::GainMatrixSmoother;
+  //using Updater = Acts::GainMatrixUpdater;
+  //using Smoother = Acts::GainMatrixSmoother;
   using Stepper = Acts::EigenStepper<>;
   using Navigator = Acts::Navigator;
   using Propagator = Acts::Propagator<Stepper, Navigator>;
@@ -495,7 +496,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   if (_seedFinding_zBinEdges.size() > 0)
   {
     gridCfg.zBinEdges.resize(_seedFinding_zBinEdges.size());
-    for (int k = 0; k < _seedFinding_zBinEdges.size(); k++)
+    for (size_t k = 0; k < _seedFinding_zBinEdges.size(); k++)
     {
       float pos = std::atof(_seedFinding_zBinEdges[k].c_str());
       if (pos >= finderCfg.zMin && pos < finderCfg.zMax)
@@ -604,7 +605,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
       const Acts::BoundVector &params = optParams.value();
 
-      float charge = std::copysign(1, params[Acts::eBoundQOverP]);
+      //float charge = std::copysign(1, params[Acts::eBoundQOverP]);
       float p = std::abs(1 / params[Acts::eBoundQOverP]);
 
       // build the track covariance matrix using the smearing sigmas

@@ -165,7 +165,7 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
   geometry_id |= volume_id << (14 * 4);
 
   //debug
-  //std::cout << systemID << " " << layerID << " " << sideID << " " << ladderID << " " << moduleID << std::endl;
+  //std::cout << "inside " << systemID << " " << layerID << " " << sideID << " " << ladderID << " " << moduleID << std::endl;
 
   // Layer ID is counting within sub detector, with pairings depending on the
   // sub detector
@@ -210,8 +210,8 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
         if(layerID==2) layer_id = 6;
         if(layerID==4) layer_id = 8;
         if(layerID==6) layer_id = 10;
-      }
       break;
+    }
     case InnerTrackerBarrel:
     case OuterTrackerBarrel: {
       layer_id = 2 * layerID + 2;
@@ -253,9 +253,32 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
   uint64_t sensitive_id;
   switch (signSystemID) {
     case VertexBarrel:
-      sensitive_id = 
-          NLad_VertexBarrel.at(det_type).at(layerID) * ladderID + moduleID + 1;
-      break;
+      if (det_type == GeometryIdMappingTool::DetSchema::MAIA_v0){
+        uint32_t my_layer_ID; 
+        switch (layerID) {
+          case 0:
+            my_layer_ID = 0;
+            break;
+          case 1:
+            my_layer_ID = 1;
+            break;
+          case 2:
+            my_layer_ID = 2;
+            break;
+          case 4:
+            my_layer_ID = 3;
+            break;
+          case 6:
+            my_layer_ID = 4;
+            break;
+        }
+        sensitive_id = NLad_VertexBarrel.at(det_type).at(my_layer_ID) * ladderID + moduleID + 1;
+        break;
+      }
+      else{
+        sensitive_id = NLad_VertexBarrel.at(det_type).at(layerID) * ladderID + moduleID + 1;
+        break;
+      }
     case InnerTrackerBarrel:
       sensitive_id =
           NLad_InnerTrackerBarrel.at(det_type).at(layerID) * ladderID + moduleID + 1;
