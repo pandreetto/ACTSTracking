@@ -19,7 +19,7 @@ namespace ACTSTracking {
  */
 class GeometryIdMappingTool {
  public:
-  enum class DetSchema : char { MuColl_v1, MuSIC_v1, MuSIC_v2 };
+  enum class DetSchema : char { MuColl_v1, MAIA_v0, MuSIC_v1, MuSIC_v2 };
 
   using modules_map = std::unordered_map<uint32_t, uint32_t>;
   using det_mod_map = std::unordered_map<DetSchema, modules_map>;
@@ -28,7 +28,7 @@ class GeometryIdMappingTool {
    * interpret cell ID's.
    */
   GeometryIdMappingTool(const std::string& encoderString,
-                        DetSchema dType = DetSchema::MuSIC_v1);
+                        DetSchema dType = DetSchema::MuColl_v1);
 
   /** Decode hit
    */
