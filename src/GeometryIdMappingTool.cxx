@@ -204,14 +204,16 @@ uint64_t GeometryIdMappingTool::getGeometryID(uint32_t systemID,
       }
       break;
     case VertexBarrel:
+      layer_id = layerID + 2;
+      if (det_type == GeometryIdMappingTool::DetSchema::MuColl_v1) layer_id = 2 * (layerID + 1);
       if (det_type == GeometryIdMappingTool::DetSchema::MAIA_v0){
         if(layerID==0) layer_id = 2;
         if(layerID==1) layer_id = 4;
         if(layerID==2) layer_id = 6;
         if(layerID==4) layer_id = 8;
         if(layerID==6) layer_id = 10;
+      }
       break;
-    }
     case InnerTrackerBarrel:
     case OuterTrackerBarrel: {
       layer_id = 2 * layerID + 2;
