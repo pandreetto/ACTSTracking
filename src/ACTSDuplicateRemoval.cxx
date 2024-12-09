@@ -103,7 +103,7 @@ void ACTSDuplicateRemoval::processEvent(LCEvent* evt) {
   std::vector<EVENT::Track*> finalTracks;
   for (EVENT::Track* myTrk : sortedInput) {
     bool foundAnEqual = false;
-    for (int i = (finalTracks.size() >= 10) ? finalTracks.size() - 10 : 0;
+    for (size_t i = (finalTracks.size() >= 10) ? finalTracks.size() - 10 : 0;
          i < finalTracks.size(); ++i) {
       EVENT::Track* otherTrk = finalTracks[i];
 
