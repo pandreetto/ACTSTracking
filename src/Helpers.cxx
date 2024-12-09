@@ -19,6 +19,8 @@
 #include <Acts/Propagator/Navigator.hpp>
 #include <Acts/Propagator/Propagator.hpp>
 
+#include <streamlog/streamlog.h>
+#include <marlin/VerbosityLevels.h>
 
 using Stepper = Acts::EigenStepper<>;
 using Navigator = Acts::Navigator;
@@ -360,7 +362,7 @@ EVENT::Track* ACTS2Marlin_track(
           track->trackStates().push_back(trackStateAtCalo);
         }
         else{
-          std::cout << "Failed propagation! " << std::endl;
+          streamlog_out(DEBUG) << "Failed propagation! " << std::endl;
         }
     }
     else{
@@ -375,7 +377,7 @@ EVENT::Track* ACTS2Marlin_track(
           track->trackStates().push_back(trackStateAtCalo);
         }
         else{
-          std::cout << "Failed propagation!" << std::endl;
+          streamlog_out(DEBUG) << "Failed propagation!" << std::endl;
         }      
     }
   }
