@@ -57,17 +57,15 @@ void TrackTruthProc::processEvent(LCEvent* evt) {
   std::vector<std::shared_ptr<LCRelationNavigator>> hit2simhits;
   for (const std::string& name : _inColH2SH) {
     // Get the collection of tracker hit relations
-    LCCollection* trackerHitRelationCollection =
-        ACTSTracking::getCollection(evt, name);
-    std::shared_ptr<LCRelationNavigator> hit2simhit =
-        std::make_shared<LCRelationNavigator>(trackerHitRelationCollection);
+    LCCollection* trackerHitRelationCollection = ACTSTracking::getCollection(evt, name);
+    if (trackerHitRelationCollection == nullptr) continue;
+    std::shared_ptr<LCRelationNavigator> hit2simhit = std::make_shared<LCRelationNavigator>(trackerHitRelationCollection);
     hit2simhits.push_back(hit2simhit);
   }
 
   //
   // MC particles
-  LCCollection* particleCollection =
-      ACTSTracking::getCollection(evt, _inColMCP);
+  LCCollection* particleCollection = ACTSTracking::getCollection(evt, _inColMCP);
   if (particleCollection == nullptr) return;
   int nParticles = particleCollection->getNumberOfElements();
 
@@ -83,8 +81,7 @@ void TrackTruthProc::processEvent(LCEvent* evt) {
 
   for (int itT = 0; itT < nTracks; ++itT) {
     // Get the track
-    EVENT::Track* track =
-        static_cast<EVENT::Track*>(trackCollection->getElementAt(itT));
+    EVENT::Track* track = static_cast<EVENT::Track*>(trackCollection->getElementAt(itT));
 
     // Loop over all hits in a track and associate it to a MC particle
     std::map<EVENT::MCParticle*, uint32_t> trackhit2mc;
@@ -99,20 +96,19 @@ void TrackTruthProc::processEvent(LCEvent* evt) {
         }
       }
 
+      if (simHit == nullptr) continue;
+
       // Increment MC particle counter
-      if (simHit->getMCParticle() != nullptr)
-        trackhit2mc[simHit->getMCParticle()]++;
+      if (simHit->getMCParticle() != nullptr) trackhit2mc[simHit->getMCParticle()]++;
+
     }
 
     // Update best matches
-    for (const std::pair<EVENT::MCParticle*, uint32_t>& mchit : trackhit2mc) {
-      float frac =
-          static_cast<float>(mchit.second) / track->getTrackerHits().size();
+    for (const std::pair<EVENT::MCParticle*, uint32_t>& mchit : trackhit2mc) {      float frac = static_cast<float>(mchit.second) / track->getTrackerHits().size();
 
       bool better =
           mcBestMatch_track.count(mchit.first) == 0 ||  // no best match exists
-          mcBestMatch_frac[mchit.first] <
-              frac;  // this match is better (more hits on track)
+          mcBestMatch_frac[mchit.first] < frac;  // this match is better (more hits on track)
 
       if (better) {
         mcBestMatch_track[mchit.first] = track;
