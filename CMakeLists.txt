@@ -69,7 +69,7 @@ TARGET_INCLUDE_DIRECTORIES(ACTSTracking
     ${ROOT_INCLUDE_DIRS})
 TARGET_LINK_LIBRARIES(ACTSTracking
   ${ROOT_LIBRARIES} DD4hep::DDCore
-  ActsCore ActsPluginTGeo ActsPluginJson)
+  ActsCore ActsPluginTGeo ActsPluginJson ActsPluginDD4hep)
 
 IF( TBB_ENABLED AND TBB_FOUND )
     TARGET_LINK_LIBRARIES(ACTSTracking TBB::tbb)

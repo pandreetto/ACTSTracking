@@ -17,7 +17,7 @@
 #include <Acts/Geometry/SurfaceArrayCreator.hpp>
 #include <Acts/Geometry/TrackingGeometryBuilder.hpp>
 #include <Acts/Geometry/TrackingVolumeArrayCreator.hpp>
-#include <Acts/MagneticField/ConstantBField.hpp>
+#include "Acts/Plugins/DD4hep/DD4hepFieldAdapter.hpp"
 #include <Acts/Plugins/Json/JsonMaterialDecorator.hpp>
 #include <Acts/Plugins/TGeo/TGeoDetectorElement.hpp>
 #include <Acts/Plugins/TGeo/TGeoLayerBuilder.hpp>
@@ -420,24 +420,7 @@ void ACTSProcBase::buildDetector() {
 }
 
 void ACTSProcBase::buildBfield() {
-  // Get the magnetic field
+  // Get the magnetic field from DD4hep
   dd4hep::Detector& lcdd = dd4hep::Detector::getInstance();
-  const double position[3] = {
-      0, 0,
-      0};  // position to calculate magnetic field at (the origin in this case)
-  double magneticFieldVector[3] = {
-      0, 0, 0};  // initialise object to hold magnetic field
-  lcdd.field().magneticField(
-      position,
-      magneticFieldVector);  // get the magnetic field vector from DD4hep
-
-  // Build ACTS representation of field
-  // Note:
-  //  magneticFieldVector[2] = 3.57e-13
-  //  dd4hep::tesla = 1e-13
-  //  Acts::UnitConstants::T = 0.000299792
-  _magneticField = std::make_shared<Acts::ConstantBField>(Acts::Vector3(
-      magneticFieldVector[0] / dd4hep::tesla * Acts::UnitConstants::T,
-      magneticFieldVector[1] / dd4hep::tesla * Acts::UnitConstants::T,
-      magneticFieldVector[2] / dd4hep::tesla * Acts::UnitConstants::T));
+  _magneticField = std::make_shared<Acts::DD4hepFieldAdapter>(lcdd.field());
 }
