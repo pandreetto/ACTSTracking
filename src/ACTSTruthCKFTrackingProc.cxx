@@ -18,8 +18,8 @@
 #include <Acts/Surfaces/PerigeeSurface.hpp>
 #include <Acts/TrackFinding/CombinatorialKalmanFilter.hpp>
 #include <Acts/TrackFinding/MeasurementSelector.hpp>
-#include <Acts/TrackFitting/GainMatrixSmoother.hpp>
 #include <Acts/TrackFitting/GainMatrixUpdater.hpp>
+#include <Acts/Utilities/TrackHelpers.hpp>
 
 #include "Acts/EventData/VectorTrackContainer.hpp"
 #include "Acts/EventData/VectorMultiTrajectory.hpp"
@@ -33,12 +33,7 @@ using namespace Acts::UnitLiterals;
 using TrackFinderOptions =
     Acts::CombinatorialKalmanFilterOptions<ACTSTracking::SourceLinkAccessor::Iterator,
                                            Acts::VectorMultiTrajectory>;
-/*
-using TrackFinderResult = Acts::Result<
-    Acts::CombinatorialKalmanFilterResult<ACTSTracking::SourceLink>>;
 
-using TrackFinderResultContainer = std::vector<TrackFinderResult>;
-*/
 ACTSTruthCKFTrackingProc aACTSTruthCKFTrackingProc;
 
 ACTSTruthCKFTrackingProc::ACTSTruthCKFTrackingProc()
@@ -238,7 +233,6 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   //
   // Initialize track finder
   using Updater = Acts::GainMatrixUpdater;
-  using Smoother = Acts::GainMatrixSmoother;
   using Stepper = Acts::EigenStepper<>;
   using Navigator = Acts::Navigator;
   using Propagator = Acts::Propagator<Stepper, Navigator>;
@@ -265,7 +259,6 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   pOptions.maxSteps = 10000;
 
   Acts::GainMatrixUpdater kfUpdater;
-  Acts::GainMatrixSmoother kfSmoother;
 
   Acts::MeasurementSelector measSel { measurementSelectorCfg };
   ACTSTracking::MeasurementCalibrator measCal { measurements };
@@ -277,9 +270,6 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   extensions.updater.connect<
       &Acts::GainMatrixUpdater::operator()<Acts::VectorMultiTrajectory>>(
       &kfUpdater);
-  extensions.smoother.connect<
-      &Acts::GainMatrixSmoother::operator()<Acts::VectorMultiTrajectory>>(
-      &kfSmoother);
   extensions.measurementSelector
       .connect<&Acts::MeasurementSelector::select<Acts::VectorMultiTrajectory>>(
           &measSel);
