@@ -14,6 +14,7 @@
 #include <Acts/EventData/MultiTrajectory.hpp>
 #include <Acts/Propagator/EigenStepper.hpp>
 #include <Acts/Propagator/Navigator.hpp>
+#include "Acts/Propagator/MaterialInteractor.hpp"
 #include <Acts/Propagator/Propagator.hpp>
 #include <Acts/Surfaces/PerigeeSurface.hpp>
 #include <Acts/TrackFinding/CombinatorialKalmanFilter.hpp>
@@ -247,8 +248,8 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   // construct all components for the fitter
   Stepper stepper(magneticField());
   Navigator navigator(navigatorCfg);
-  Propagator propagator(std::move(stepper), std::move(navigator));
-  CKF trackFinder(std::move(propagator));
+  Propagator propagator(stepper, navigator);
+  CKF trackFinder(propagator);
 
   // Set the options
   Acts::MeasurementSelector::Config measurementSelectorCfg = {
@@ -285,8 +286,7 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   // Acts::Logging::Level::VERBOSE);
   TrackFinderOptions ckfOptions = TrackFinderOptions(
       geometryContext(), magneticFieldContext(), calibrationContext(),
-      slAccessorDelegate,
-      extensions, pOptions, perigeeSurface.get());
+      slAccessorDelegate, extensions, pOptions);
 
   //
   // Output
@@ -308,6 +308,10 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
   TrackContainer tracks(trackContainer, trackStateContainer);
 
+  Acts::PropagatorOptions<Acts::ActionList<Acts::MaterialInteractor>,
+                          Acts::AbortList<Acts::EndOfWorldReached>>
+      extrapolationOptions(geometryContext(), magFieldContext);
+
   for (std::size_t iseed = 0; iseed < seeds.size(); ++iseed) {
     auto result = trackFinder.findTracks(seeds.at(iseed), ckfOptions, tracks);
     if (result.ok()) {
@@ -320,6 +324,16 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
         if (!smoothResult.ok())
         {
           streamlog_out(DEBUG) << "Smooth failure: " << smoothResult.error() << std::endl;
+          continue;
+        }
+
+        auto extrapolationResult = Acts::extrapolateTrackToReferenceSurface(
+            trackTip, *perigeeSurface, propagator, extrapolationOptions,
+            Acts::TrackExtrapolationStrategy::firstOrLast);
+        if (!extrapolationResult.ok())
+        {
+          streamlog_out(DEBUG) << "Extrapolation failure: "
+            << extrapolationResult.error() << std::endl;
           continue;
         }
 

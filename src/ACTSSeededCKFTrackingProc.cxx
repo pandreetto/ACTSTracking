@@ -15,6 +15,7 @@
 #include <Acts/EventData/MultiTrajectory.hpp>
 #include <Acts/Propagator/EigenStepper.hpp>
 #include <Acts/Propagator/Navigator.hpp>
+#include "Acts/Propagator/MaterialInteractor.hpp"
 #include <Acts/Propagator/Propagator.hpp>
 #include <Acts/Seeding/EstimateTrackParamsFromSeed.hpp>
 #include <Acts/Seeding/SeedFinder.hpp>
@@ -392,8 +393,8 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   // construct all components for the fitter
   Stepper stepper(magneticField());
   Navigator navigator(navigatorCfg);
-  Propagator propagator(std::move(stepper), std::move(navigator));
-  CKF trackFinder(std::move(propagator));
+  Propagator propagator(stepper, navigator);
+  CKF trackFinder(propagator);
 
   // Set the options
   Acts::MeasurementSelector::Config measurementSelectorCfg = {
@@ -439,8 +440,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
   TrackFinderOptions ckfOptions = TrackFinderOptions(
       geometryContext(), magneticFieldContext(), calibrationContext(),
-      slAccessorDelegate,
-      extensions, pOptions, perigeeSurface.get());
+      slAccessorDelegate, extensions, pOptions);
 
   //
   // Finder configuration
@@ -669,6 +669,10 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
     TrackContainer tracks(trackContainer, trackStateContainer);
 
+    Acts::PropagatorOptions<Acts::ActionList<Acts::MaterialInteractor>,
+                            Acts::AbortList<Acts::EndOfWorldReached>>
+        extrapolationOptions(geometryContext(), magFieldContext);
+
     for (std::size_t iseed = 0; iseed < paramseeds.size(); ++iseed) {
 
       tracks.clear();
@@ -687,6 +691,17 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
               << smoothResult.error() << std::endl;
             continue;
           }
+
+          auto extrapolationResult = Acts::extrapolateTrackToReferenceSurface(
+              trackTip, *perigeeSurface, propagator, extrapolationOptions,
+              Acts::TrackExtrapolationStrategy::firstOrLast);
+          if (!extrapolationResult.ok())
+          {
+            streamlog_out(DEBUG) << "Extrapolation failure: "
+              << extrapolationResult.error() << std::endl;
+            continue;
+          }
+
           //
           // Helpful debug output
           streamlog_out(DEBUG) << "Trajectory Summary" << std::endl;
