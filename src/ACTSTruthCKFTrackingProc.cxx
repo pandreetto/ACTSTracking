@@ -312,9 +312,17 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
     auto result = trackFinder.findTracks(seeds.at(iseed), ckfOptions, tracks);
     if (result.ok()) {
       const auto& fitOutput = result.value();
-      for (const auto& trackTip : fitOutput)
+      for (const auto& trackItem : fitOutput)
       {
-        std::cout << trackTip.chi2() << std::endl;
+        auto trackTip = tracks.makeTrack();
+        trackTip.copyFrom(trackItem, true);
+        auto smoothResult = Acts::smoothTrack(geometryContext(), trackTip);
+        if (!smoothResult.ok())
+        {
+          streamlog_out(DEBUG) << "Smooth failure: " << smoothResult.error() << std::endl;
+          continue;
+        }
+
         EVENT::Track* track = ACTSTracking::ACTS2Marlin_track(
             trackTip, magneticField(), magCache,
             _caloFaceR, _caloFaceZ, geometryContext(), magneticFieldContext(), trackingGeometry());
