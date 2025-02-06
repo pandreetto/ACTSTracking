@@ -233,7 +233,6 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
     // MeasurementContainer track;
     ACTSTracking::MeasurementContainer measurements;
     std::vector<Acts::SourceLink> trackSourceLinks;
-    ACTSTracking::MeasurementContainer track;
     for (EVENT::TrackerHit* hit : trackFilteredByRHits) {
       // Convert to Acts hit
       const Acts::Surface* surface = findSurface(hit);
@@ -258,12 +257,12 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
         throw std::runtime_error("Currently only support TrackerHitPlane.");
       }
 
-      ACTSTracking::SourceLink s_link(surface->geometryId(), track.size(), hit);
+      ACTSTracking::SourceLink s_link(surface->geometryId(),
+    		                          measurements.size(), hit);
       Acts::SourceLink sourceLink { std::move(s_link) };
-      ACTSTracking::Measurement meas = Acts::makeMeasurement(
+      auto meas = ACTSTracking::makeMeasurement(
           sourceLink, loc, cov, Acts::eBoundLoc0, Acts::eBoundLoc1);
 
-      track.push_back(meas);
       measurements.push_back(meas);
       trackSourceLinks.push_back(sourceLink);
     }
@@ -304,7 +303,7 @@ void ACTSTruthTrackingProc::processEvent(LCEvent* evt) {
       magneticFieldContext(),
       calibrationContext(),
       extensions,
-      Acts::PropagatorPlainOptions(),
+      Acts::PropagatorPlainOptions(geometryContext(), magneticFieldContext()),
       &(*perigeeSurface)
     };
 

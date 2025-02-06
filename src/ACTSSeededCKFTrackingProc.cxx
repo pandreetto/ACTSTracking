@@ -33,10 +33,12 @@ using namespace Acts::UnitLiterals;
 #include "SeedSpacePoint.hxx"
 #include "SourceLink.hxx"
 
-// Track fitting definitions
+using TrackContainer = Acts::TrackContainer<Acts::VectorTrackContainer,
+                                            Acts::VectorMultiTrajectory,
+                                            std::shared_ptr>;
 using TrackFinderOptions =
     Acts::CombinatorialKalmanFilterOptions<ACTSTracking::SourceLinkAccessor::Iterator,
-                                        Acts::VectorMultiTrajectory>;
+	                                       TrackContainer>;
 using SSPoint = ACTSTracking::SeedSpacePoint;
 using SSPointGrid = Acts::CylindricalSpacePointGrid<SSPoint>;
 
@@ -316,14 +318,11 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     ACTSTracking::SourceLink sourceLink(surface->geometryId(),
                                         measurements.size(), hit.second);
     Acts::SourceLink src_wrap { sourceLink };
-    Acts::Measurement meas = Acts::makeMeasurement(
+    ACTSTracking::Measurement meas = ACTSTracking::makeMeasurement(
         src_wrap, loc, localCov, Acts::eBoundLoc0, Acts::eBoundLoc1);
 
     measurements.push_back(meas);
     sourceLinks.emplace_hint(sourceLinks.end(), sourceLink);
-
-    //std::cout << surface->geometryId() << std::endl;
-    //std::cout << _seedGeometrySelection.check(surface->geometryId()) << std::endl;
 
     //
     // Seed selection and conversion to useful coordinates
@@ -382,7 +381,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
   using Stepper = Acts::EigenStepper<>;
   using Navigator = Acts::Navigator;
   using Propagator = Acts::Propagator<Stepper, Navigator>;
-  using CKF = Acts::CombinatorialKalmanFilter<Propagator, Acts::VectorMultiTrajectory>;
+  using CKF = Acts::CombinatorialKalmanFilter<Propagator, TrackContainer>;
 
   // Configurations
   Navigator::Config navigatorCfg{trackingGeometry()};
@@ -401,7 +400,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
       {Acts::GeometryIdentifier(),
        { {}, { _CKF_chi2CutOff }, { (std::size_t)(_CKF_numMeasurementsCutOff) }}}};
 
-  Acts::PropagatorPlainOptions pOptions;
+  Acts::PropagatorPlainOptions pOptions { geometryContext(), magneticFieldContext() };
   pOptions.maxSteps = 10000;
   if (_propagateBackward) {
     pOptions.direction = Acts::Direction::Backward;
@@ -416,7 +415,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
   Acts::MeasurementSelector measSel { measurementSelectorCfg };
   ACTSTracking::MeasurementCalibrator measCal { measurements };
-  Acts::CombinatorialKalmanFilterExtensions<Acts::VectorMultiTrajectory>
+  Acts::CombinatorialKalmanFilterExtensions<TrackContainer>
       extensions;
   extensions.calibrator.connect<
       &ACTSTracking::MeasurementCalibrator::calibrate>(
@@ -547,9 +546,9 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
       finderCfg.useDetailedDoubleMeasurementInfo);
 
   float up = Acts::clampValue<float>(
-      std::floor(rRangeSPExtent.max(Acts::binR) / 2) * 2);
+      std::floor(rRangeSPExtent.max(Acts::BinningValue::binR) / 2) * 2);
   const Acts::Range1D<float> rMiddleSPRange(
-      std::floor(rRangeSPExtent.min(Acts::binR) / 2) * 2 +
+      std::floor(rRangeSPExtent.min(Acts::BinningValue::binR) / 2) * 2 +
           finderCfg.deltaRMiddleMinSPRange,
       up - finderCfg.deltaRMiddleMaxSPRange);                  // TODO investigate
 
@@ -561,7 +560,7 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
 
     finder.createSeedsForGroup(
         finderOpts, state, spacePointsGrouping.grid(),
-        std::back_inserter(seeds), bottom, middle, top, rMiddleSPRange);
+        seeds, bottom, middle, top, rMiddleSPRange);
 
     //
     // Loop over seeds and get track parameters
@@ -662,15 +661,12 @@ void ACTSSeededCKFTrackingProc::processEvent(LCEvent *evt) {
     // Find the tracks
     if (!_runCKF) continue;
 
-    using TrackContainer = Acts::TrackContainer<Acts::VectorTrackContainer,
-                                                Acts::VectorMultiTrajectory,
-                                                std::shared_ptr>;
     auto trackContainer = std::make_shared<Acts::VectorTrackContainer>();
     auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
     TrackContainer tracks(trackContainer, trackStateContainer);
 
-    Acts::PropagatorOptions<Acts::ActionList<Acts::MaterialInteractor>,
-                            Acts::AbortList<Acts::EndOfWorldReached>>
+    Propagator::template Options<Acts::ActionList<Acts::MaterialInteractor>,
+                                 Acts::AbortList<Acts::EndOfWorldReached>>
         extrapolationOptions(geometryContext(), magFieldContext);
 
     for (std::size_t iseed = 0; iseed < paramseeds.size(); ++iseed) {

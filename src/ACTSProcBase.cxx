@@ -21,6 +21,7 @@
 #include <Acts/Plugins/Json/JsonMaterialDecorator.hpp>
 #include <Acts/Plugins/TGeo/TGeoDetectorElement.hpp>
 #include <Acts/Plugins/TGeo/TGeoLayerBuilder.hpp>
+#include "Acts/Utilities/BinningType.hpp"
 
 #include "Helpers.hxx"
 
@@ -260,11 +261,10 @@ void ACTSProcBase::buildDetector() {
     layerBuilderConfig.autoSurfaceBinning = true;
 
     // AutoBinning
-    std::vector<std::pair<double, double>> binTolerances{(int)Acts::binValues,
-                                                         {0., 0.}};
-    binTolerances[Acts::binR] = range_from_json(volume["geo-tgeo-sfbin-r-tolerance"]);
-    binTolerances[Acts::binZ] = range_from_json(volume["geo-tgeo-sfbin-z-tolerance"]);
-    binTolerances[Acts::binPhi] = range_from_json(volume["geo-tgeo-sfbin-phi-tolerance"]);
+    std::vector<std::pair<double, double>> binTolerances { Acts::numBinningValues(), { 0., 0. } };
+    binTolerances[static_cast<int>(Acts::BinningValue::binR)] = range_from_json(volume["geo-tgeo-sfbin-r-tolerance"]);
+    binTolerances[static_cast<int>(Acts::BinningValue::binZ)] = range_from_json(volume["geo-tgeo-sfbin-z-tolerance"]);
+    binTolerances[static_cast<int>(Acts::BinningValue::binPhi)] = range_from_json(volume["geo-tgeo-sfbin-phi-tolerance"]);
     layerBuilderConfig.surfaceBinMatcher =
         Acts::SurfaceBinningMatcher(binTolerances);
 
@@ -286,21 +286,21 @@ void ACTSProcBase::buildDetector() {
           0.1 * Acts::UnitConstants::mm, 0.1 * Acts::UnitConstants::mm);
 
       // Fill the parsing restrictions in r
-      lConfig.parseRanges.push_back({Acts::binR, range_from_json(volume["geo-tgeo-layer-r-ranges"][subvolumeName])});
+      lConfig.parseRanges.push_back({Acts::BinningValue::binR, range_from_json(volume["geo-tgeo-layer-r-ranges"][subvolumeName])});
 
       // Fill the parsing restrictions in z
-      lConfig.parseRanges.push_back({Acts::binZ, range_from_json(volume["geo-tgeo-layer-z-ranges"][subvolumeName])});
+      lConfig.parseRanges.push_back({Acts::BinningValue::binZ, range_from_json(volume["geo-tgeo-layer-z-ranges"][subvolumeName])});
 
       // Fill the layer splitting parameters in z
       float rsplit = volume["geo-tgeo-layer-r-split"][subvolumeName];
       if(rsplit > 0) {
-        lConfig.splitConfigs.push_back({Acts::binR, rsplit});
+        lConfig.splitConfigs.push_back({Acts::BinningValue::binR, rsplit});
       }
 
       // Fill the layer splitting parameters in z
       float zsplit = volume["geo-tgeo-layer-z-split"][subvolumeName];
       if(zsplit > 0) {
-        lConfig.splitConfigs.push_back({Acts::binZ, zsplit});
+        lConfig.splitConfigs.push_back({Acts::BinningValue::binZ, zsplit});
       }
 
       // Save
@@ -368,7 +368,7 @@ void ACTSProcBase::buildDetector() {
         -> void {
       for (const auto& lcfg : lConfigs) {
         for (const auto& scfg : lcfg.splitConfigs) {
-          if (scfg.first == Acts::binR and scfg.second > 0.) {
+          if (scfg.first == Acts::BinningValue::binR and scfg.second > 0.) {
             volumeConfig.ringTolerance =
                 std::max(volumeConfig.ringTolerance, scfg.second);
             volumeConfig.checkRingLayout = true;

@@ -25,15 +25,19 @@
 #include "Acts/EventData/VectorTrackContainer.hpp"
 #include "Acts/EventData/VectorMultiTrajectory.hpp"
 
+
 using namespace Acts::UnitLiterals;
 
 #include "Helpers.hxx"
 #include "MeasurementCalibrator.hxx"
 #include "SourceLink.hxx"
 
+using TrackContainer = Acts::TrackContainer<Acts::VectorTrackContainer,
+                                            Acts::VectorMultiTrajectory,
+											std::shared_ptr>;
 using TrackFinderOptions =
     Acts::CombinatorialKalmanFilterOptions<ACTSTracking::SourceLinkAccessor::Iterator,
-                                           Acts::VectorMultiTrajectory>;
+	                                       TrackContainer>;
 
 ACTSTruthCKFTrackingProc aACTSTruthCKFTrackingProc;
 
@@ -218,7 +222,7 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
     ACTSTracking::SourceLink sourceLink(surface->geometryId(),
                                         measurements.size(), hit.second);
     Acts::SourceLink src_wrap { sourceLink };
-    Acts::Measurement meas = Acts::makeMeasurement(
+    ACTSTracking::Measurement meas = ACTSTracking::makeMeasurement(
         src_wrap, loc, localCov, Acts::eBoundLoc0, Acts::eBoundLoc1);
 
     measurements.push_back(meas);
@@ -237,7 +241,7 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
   using Stepper = Acts::EigenStepper<>;
   using Navigator = Acts::Navigator;
   using Propagator = Acts::Propagator<Stepper, Navigator>;
-  using CKF = Acts::CombinatorialKalmanFilter<Propagator, Acts::VectorMultiTrajectory>;
+  using CKF = Acts::CombinatorialKalmanFilter<Propagator, TrackContainer>;
 
   // Configurations
   Navigator::Config navigatorCfg{trackingGeometry()};
@@ -256,14 +260,14 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
       {Acts::GeometryIdentifier(),
        { {}, { _CKF_chi2CutOff }, { (std::size_t)(_CKF_numMeasurementsCutOff) }}}};
 
-  Acts::PropagatorPlainOptions pOptions;
+  Acts::PropagatorPlainOptions pOptions { geometryContext(), magneticFieldContext() };
   pOptions.maxSteps = 10000;
 
   Acts::GainMatrixUpdater kfUpdater;
 
   Acts::MeasurementSelector measSel { measurementSelectorCfg };
   ACTSTracking::MeasurementCalibrator measCal { measurements };
-  Acts::CombinatorialKalmanFilterExtensions<Acts::VectorMultiTrajectory>
+  Acts::CombinatorialKalmanFilterExtensions<TrackContainer>
       extensions;
   extensions.calibrator.connect<
       &ACTSTracking::MeasurementCalibrator::calibrate>(
@@ -301,15 +305,12 @@ void ACTSTruthCKFTrackingProc::processEvent(LCEvent* evt) {
 
   //
   // Find the tracks
-  using TrackContainer =
-      Acts::TrackContainer<Acts::VectorTrackContainer,
-                           Acts::VectorMultiTrajectory, std::shared_ptr>;
   auto trackContainer = std::make_shared<Acts::VectorTrackContainer>();
   auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
   TrackContainer tracks(trackContainer, trackStateContainer);
 
-  Acts::PropagatorOptions<Acts::ActionList<Acts::MaterialInteractor>,
-                          Acts::AbortList<Acts::EndOfWorldReached>>
+  Propagator::template Options<Acts::ActionList<Acts::MaterialInteractor>,
+                               Acts::AbortList<Acts::EndOfWorldReached>>
       extrapolationOptions(geometryContext(), magFieldContext);
 
   for (std::size_t iseed = 0; iseed < seeds.size(); ++iseed) {

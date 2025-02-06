@@ -1,19 +1,14 @@
 #pragma once
 
-#include <Acts/EventData/Measurement.hpp>
 #include "Acts/EventData/SourceLink.hpp"
 #include "Acts/EventData/VectorMultiTrajectory.hpp"
 #include "Acts/Geometry/GeometryContext.hpp"
 #include "Acts/Utilities/CalibrationContext.hpp"
 
 #include "SourceLink.hxx"
+#include "Measurement.hxx"
 
 namespace ACTSTracking {
-//! Hit stored as an measurement
-using Measurement = Acts::BoundVariantMeasurement;
-
-//! Collection of measurements
-using MeasurementContainer = std::vector<Measurement>;
 
 class MeasurementCalibrator {
  public:
@@ -40,16 +35,20 @@ class MeasurementCalibrator {
   void calibrate(const Acts::GeometryContext& gctx,
                  const Acts::CalibrationContext& cctx,
                  const Acts::SourceLink& sourceLink,
-                 Acts::VectorMultiTrajectory::TrackStateProxy trackState) const {
+                 Acts::VectorMultiTrajectory::TrackStateProxy trackState) const
+  {
     trackState.setUncalibratedSourceLink(sourceLink);
     const auto& idxSourceLink = sourceLink.get<ACTSTracking::SourceLink>();
 
     assert((idxSourceLink.index() < m_measurements.size()) and
            "Source link index is outside the container bounds");
 
-    const auto& meas = std::get<1>(m_measurements[idxSourceLink.index()]);  //TODO workaround
-    trackState.allocateCalibrated(meas.size());
-    trackState.setCalibrated(meas);
+    const auto meas = std::get<1>(m_measurements[idxSourceLink.index()]);
+    constexpr std::size_t kMeasurementSize = decltype(meas)::size();
+
+    trackState.allocateCalibrated(kMeasurementSize);
+    trackState.calibrated<kMeasurementSize>() = meas.parameters();
+    trackState.calibratedCovariance<kMeasurementSize>() = meas.covariance();
   }
 
  private:
